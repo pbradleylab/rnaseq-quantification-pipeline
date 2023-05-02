@@ -1,0 +1,16 @@
+""" Create an RNASeq pipeline up to the start of defrential analysis.
+"""
+from snakemake.utils import min_version
+min_version("6.0") # Enforces minimum conda version ~
+
+configfile: "config/config.json"
+pepfile: config["pepfile"]
+
+include: "rules/quantification.smk"
+include: "rules/alignment.smk"
+include: "rules/quality_control.smk"
+include: "rules/trimming.smk"
+
+rule all:
+    input: expand(rules.multiqc.output[0], project=pep.sample_table.project.unique().tolist())
+    

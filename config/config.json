@@ -1,0 +1,46 @@
+{
+    "pepfile":"config/pepconfig.yml",
+    "genome":"genome.fa", 
+    "gff3":"test.gff",
+    "organism_name":"Schizosaccharomyces pombe",
+    "repeat_modeler":{
+        "threads":4
+    },
+    "fastqc": {
+        "mem": 1024,
+        "threads": 8
+    },
+    "fastq_screen": {
+        "threads": 8,
+        "mem": 1024,
+        "subset": 100000,
+        "aligner": "bowtie2"
+    },
+    "multiqc": {
+        "mem": 1024
+    },
+    "trim_galore": {
+        "mem": 1024
+    },
+    "combine_quants": {
+        "mem": 1024
+    },
+    "kallisto": {
+        "mem": 1024
+    },
+    "hisat2": {
+        "mem": 1024
+    },
+    "picard": {
+        "collect_insert_size_metrics": {
+            "threads": 8,
+            "mem": 8192,
+            "java_opts": "-Xmx8g"
+        },
+        "collect_rna_seq_metrics":{
+            "threads": 8,
+            "mem": 8,
+            "java_opts": "-Xmx8g"     
+        }
+    }
+}

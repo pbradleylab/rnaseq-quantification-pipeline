@@ -5,3 +5,4 @@ channels:
 dependencies:
   - multiqc=1.14
   - fastqc=0.12.1
+  - fastq-screen=0.15.3

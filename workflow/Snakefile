@@ -10,6 +10,7 @@ include: "rules/quantification.smk"
 include: "rules/alignment.smk"
 include: "rules/quality_control.smk"
 include: "rules/trimming.smk"
+include: "rules/resources.smk"
 
 rule all:
     input: expand(rules.multiqc.output[0], project=pep.sample_table.project.unique().tolist())

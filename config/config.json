@@ -1,7 +1,8 @@
 {
     "pepfile":"config/pepconfig.yml",
-    "genome":"genome.fa", 
-    "gff3":"test.gff",
+    "genome":"test/GCA_018406465.1_ASM1840646v1_genomic.fa", 
+    "genome_name":"GCA_018406465.1_ASM1840646v1_genomic.fa",
+    "gff3":"test/genome.gff",
     "organism_name":"Schizosaccharomyces pombe",
     "repeat_modeler":{
         "threads":4

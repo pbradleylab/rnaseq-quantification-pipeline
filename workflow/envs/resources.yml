@@ -1,0 +1,7 @@
+channels:
+  - anaconda
+  - bioconda
+  - conda-forge
+dependencies:
+  - fastq-screen=0.15.3
+  - wget

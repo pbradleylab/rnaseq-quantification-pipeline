@@ -1,6 +1,6 @@
 description: RNAseq schema that allows for bacterial paired end read quantification. 
 imports:
-  - http://schema.databio.org/pep/2.0.0.yaml
+  - http:/schema.databio.org/pep/2.0.0.yaml
 properties:
   samples:
     type: array

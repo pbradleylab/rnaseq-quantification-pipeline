@@ -13,5 +13,9 @@ include: "rules/trimming.smk"
 include: "rules/resources.smk"
 
 rule all:
-    input: expand(rules.multiqc.output[0], project=pep.sample_table.project.unique().tolist())
+    input: 
+        expand(rules.multiqc.output[0], project=pep.sample_table.project.unique().tolist()),
+        expand(rules.R1.output[0], project=pep.sample_table.project.unique().tolist()),
+        expand(rules.R1.output[1], project=pep.sample_table.project.unique().tolist())
+
     

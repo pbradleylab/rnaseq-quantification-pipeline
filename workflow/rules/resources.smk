@@ -15,9 +15,22 @@ rule download_fastq_screen_genomes:
         mv {params.folder_name} {output}
         """
 
+# Generate the transcriptome file.
+rule gffread:
+    input:
+        gff3=config["gff3"],
+        ref=config["genome"]
+    output: "resources/transcriptome.fa"
+    conda: "../envs/resources.yml"
+    shell:
+        """
+        gffread -w {output} -g {input.ref} --gtf {input.gff3}
+        """
+
 # Generate the Kallisto index
 rule kallisto_index:
-    output: "resources/"+config["genome_name"]+".index"
+    input: rules.gffread.output
+    output: "resources/"+config["genome_name"]+".transcriptome_index"
     params:
         ref=config["genome"],
         name=config["genome_name"]
@@ -25,6 +38,6 @@ rule kallisto_index:
     conda: "../envs/quantification.yml"
     shell:
         """
-        kallisto index -i {params.name}.index {params.ref}
-        mv {params.name}.index resources/
+        kallisto index -i {params.name}.transcriptome_index {input}
+        mv {params.name}.transcriptome_index resources/
         """

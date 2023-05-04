@@ -49,7 +49,7 @@ rule fastq_screen:
 #Offical Documentation: https:/www.bioinformatics.babraham.ac.uk/projects/fastqc/
 rule fastqc:
     input: unpack(get_fastq_input)
-    output: "results/{project}/reports/fastqc/{subsample}_R1_fastqc.zip"
+    output: "results/{project}/reports/fastqc/{subsample}_R1_001_fastqc.zip"
     log: "logs/{project}/fastqc/{subsample}.log"
     params:
         out_dir="results/{project}/reports/fastqc/",

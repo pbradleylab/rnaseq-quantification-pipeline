@@ -4,9 +4,6 @@
     "genome_name":"GCA_018406465.1_ASM1840646v1_genomic.fa",
     "gff3":"test/genome.gff",
     "organism_name":"Schizosaccharomyces pombe",
-    "repeat_modeler":{
-        "threads":4
-    },
     "fastqc": {
         "mem": 1024,
         "threads": 8

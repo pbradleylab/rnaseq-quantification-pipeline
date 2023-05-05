@@ -2,6 +2,21 @@
 retrival, and mangement.
 """
 
+# def get_paired_fastqs(wildcards):
+#     out = {} # Dictionary that will hold two reads with r1 in index 0 and r2 in index 1
+#     reads = get_subsample_attributes(wildcards.subsample, "reads", pep)
+#     r1=[x for x in reads if ("_R1" in x or ".R1" in x or ".r1" in x or "_r1" in x or "_2.fq" in x or "_1.fastq" in x)]
+#     r2=[x for x in reads if ("_R2" in x or ".R2" in x or ".r2" in x or "_r2" in x or "_2.fq" in x or "_2.fastq" in x)]
+#     out["r1"] = r1[0]; out["r2"] = r2[1]
+#     return out
+
+# # Create symlink that has the file renamed to specific ending
+# rule symlink_files:
+#     input: unpack(get_paired_fastqs)
+#     output: "resources/{project}/raw/{subsample}_R1.fastq.gz"
+#     resources:mem_mb=1024
+#     shell:"ln -s {input} {output}"
+
 # Downloads the default necessary resources for checking for contamination 
 # with fastqscreen. Admittedly, not all of the genomes need/are to be used.
 rule download_fastq_screen_genomes:
@@ -41,3 +56,23 @@ rule kallisto_index:
         kallisto index -i {params.name}.transcriptome_index {input}
         mv {params.name}.transcriptome_index resources/
         """
+
+rule hisat2_index:
+    input: config["genome"]
+    output: "resources/"+config["genome_name"]+".1.ht2"
+    params:
+        name=config["genome_name"]
+    conda: "../envs/alignment.yml"
+    shell:
+        """
+        hisat2-build {input} {params.name}
+        mv {params.name}.*.ht2 resources/
+        """     
+
+# Generates an bai index for a bam
+rule samtools_index:
+    input: "{subsample}.bam"
+    output: "{subsample}.bam.bai"
+    resources:mem_mb=1024
+    conda: "../envs/alignment.yml"
+    shell:"samtools index {input}"

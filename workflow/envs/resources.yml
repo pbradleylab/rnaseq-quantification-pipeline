@@ -5,4 +5,5 @@ channels:
 dependencies:
   - fastq-screen=0.15.3
   - gffread=0.12.7
+  - samtools=1.17
   - wget

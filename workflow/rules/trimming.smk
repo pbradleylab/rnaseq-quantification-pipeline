@@ -9,18 +9,18 @@ def getPairedFastqs(wildcards):
     out["r1"] = r1[0]; out["r2"] = r2[1]
     return out
 
-# rim Galore is a wrapper around Cutadapt and FastQC 
+# Trim Galore is a wrapper around Cutadapt and FastQC 
 # to consistently apply adapter and quality trimming to 
 # FastQ files, with extra functionality for RRBS data.
 # Official documentation can be found here: https:/github.com/FelixKrueger/TrimGalore
 rule trim_galore:
     input: unpack(getPairedFastqs)
     output:
-        r1="results/trimming/trim_galore/{subsample}_R1_001_val_1.fq.gz",
-        r2="results/trimming/trim_galore/{subsample}_R2_001_val_2.fq.gz"
+        r1="results/{project}/trimming/trim_galore/{subsample}_R1_001_val_1.fq.gz",
+        r2="results/{project}/trimming/trim_galore/{subsample}_R2_001_val_2.fq.gz"
     params:
-        out_dir="results/trimming/trim_galore/" 
-    log: "logs/trimming/trim_galore/{subsample}.log"
+        out_dir="results/{project}/trimming/trim_galore/" 
+    log: "logs/{project}/trimming/trim_galore/{subsample}.log"
     resources:mem_mb=config["trim_galore"]["mem"]
     conda: "../envs/trimming.yml"
-    shell: "trim_galore --paired {input} -o {params.out_dir}"
+    shell: "trim_galore --paired {input} -o {params.out_dir} 2> {log}"

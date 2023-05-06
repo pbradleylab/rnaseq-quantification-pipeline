@@ -32,11 +32,12 @@ rule merge_kallisto:
         "results/{project}/final/quantification/kallisto/transcript_tpms_all_samples.tsv",
         "results/{project}/final/quantification/kallisto/transcript_counts_all_samples.tsv"
     params:
-        out_dir="results/{project}/final/quantification/kallisto/"
+        out_dir="results/{project}/quantification/kallisto/"
     resources: mem=config["kallisto"]["mem"]
     conda: "../envs/quantification.yml"
     shell:
         """
         chmod 777 workflow/scripts/combine.sh
-        workflow/scripts/combine.sh -i {params.out_dir} -o1 {output[0]} -o2 {output[1]}
+        echo workflow/scripts/combine.sh -i {params.out_dir} -t {output[0]} -c {output[1]}
+        bash workflow/scripts/combine.sh -i {params.out_dir} -t {output[0]} -c {output[1]}
         """

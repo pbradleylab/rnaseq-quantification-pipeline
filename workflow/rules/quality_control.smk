@@ -16,7 +16,7 @@ def get_multiqc_subsamples(wildcards):
         metricsLST.append(rules.fastqc.output[0].format(project=project, subsample=subsample))
         metricsLST.append(rules.fastq_screen.output[0].format(project=project, subsample=subsample))
         metricsLST.append(rules.kallisto.output[0].format(project=project, subsample=subsample))
-        metricsLST.append(rules.differential_gene_expression.output[0].format(project=project, subsample=subsample))
+        #metricsLST.append(rules.differential_gene_expression.output[0].format(project=project, subsample=subsample))
 
     return metricsLST
 

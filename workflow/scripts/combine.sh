@@ -2,8 +2,8 @@ while getopts i:o: flag
 do
     case "${flag}" in
         i) input=${OPTARG};;
-        o1) out_tmp=${OPTARG};;
-        o2) out_count=${OPTARG};;
+        c) out_tmp=${OPTARG};;
+        t) out_count=${OPTARG};;
     esac
 done
 

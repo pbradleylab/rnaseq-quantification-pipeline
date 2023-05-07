@@ -2,20 +2,35 @@
 retrival, and mangement.
 """
 
-# def get_paired_fastqs(wildcards):
-#     out = {} # Dictionary that will hold two reads with r1 in index 0 and r2 in index 1
-#     reads = get_subsample_attributes(wildcards.subsample, "reads", pep)
-#     r1=[x for x in reads if ("_R1" in x or ".R1" in x or ".r1" in x or "_r1" in x or "_2.fq" in x or "_1.fastq" in x)]
-#     r2=[x for x in reads if ("_R2" in x or ".R2" in x or ".r2" in x or "_r2" in x or "_2.fq" in x or "_2.fastq" in x)]
-#     out["r1"] = r1[0]; out["r2"] = r2[1]
-#     return out
+def get_r1_fastqs(wildcards):
+    out = {} # Dictionary that will hold two reads with r1 in index 0 and r2 in index 1
+    reads = get_subsample_attributes(wildcards.subsample, "reads", pep)
+    r1=[x for x in reads if ("_R1" in x or ".R1" in x or ".r1" in x or "_r1" in x or "_2.fq" in x or "_1.fastq" in x)]
+    return r1[0]
 
-# # Create symlink that has the file renamed to specific ending
-# rule symlink_files:
-#     input: unpack(get_paired_fastqs)
-#     output: "resources/{project}/raw/{subsample}_R1.fastq.gz"
-#     resources:mem_mb=1024
-#     shell:"ln -s {input} {output}"
+def get_r2_fastqs(wildcards):
+    out = {} # Dictionary that will hold two reads with r1 in index 0 and r2 in index 1
+    reads = get_subsample_attributes(wildcards.subsample, "reads", pep)
+    r2=[x for x in reads if ("_R2" in x or ".R2" in x or ".r2" in x or "_r2" in x or "_2.fq" in x or "_2.fastq" in x)]
+    return r2[1]
+
+# Create symlink that has the file renamed to specific ending
+rule symlink_files:
+    input: 
+        read1=get_r1_fastqs,
+        read2=get_r2_fastqs
+    output: 
+        read1="resources/{project}/raw/{subsample}_R1.fastq.gz",
+        read2="resources/{project}/raw/{subsample}_R2.fastq.gz"
+    params:
+        out_dir="resources/{project}/raw/"
+    resources:mem_mb=1024
+    shell:
+        """
+        mkdir -p {params.out_dir}
+        ln -s {input.read1} {output.read1}
+        ln -s {input.read2} {output.read2}
+        """
 
 # Downloads the default necessary resources for checking for contamination 
 # with fastqscreen. Admittedly, not all of the genomes need/are to be used.

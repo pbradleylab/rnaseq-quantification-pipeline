@@ -1,6 +1,6 @@
 # RNASeq Quantification Workflow
 ### Installation and Environment Set Up
-This workflow expects that you have (https://docs.conda.io/en/latest/miniconda.html)[conda] installed prior to starting. Conda is very easy to install in general and will allow you to easily install the other dependencies needed in this workflow. then you will need to download this repository via git clone.
+This workflow expects that you have [conda](https://docs.conda.io/en/latest/miniconda.html) installed prior to starting. Conda is very easy to install in general and will allow you to easily install the other dependencies needed in this workflow. then you will need to download this repository via git clone.
 
 1. Activate your conda environment so that you are in the "base" environment. This can be achieved by running a source /path/to/conda/install/folder/bin/activate
 2. Create a new environment named "snakemake" by running `conda create -n snakemake`. Then activate it by running `conda activate snakemake`

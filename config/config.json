@@ -1,9 +1,19 @@
 {
     "pepfile":"config/pepconfig.yml",
-    "genome":"test/GCA_018406465.1_ASM1840646v1_genomic.fa", 
-    "genome_name":"GCA_018406465.1_ASM1840646v1_genomic.fa",
-    "gff3":"test/genome.gff",
+    "genome":"resources/Robinsoniella_peoriensis_annotation.feature_dna.fasta", 
+    "genome_name":"Robinsoniella_peoriensis_annotation.feature_dna.fasta",
+    "gff3":"resources/Robinsoniella_peoriensis_annotation.gff",
     "organism_name":"Schizosaccharomyces pombe",
+    "java_flags_inject": "_JAVA_OPTIONS=\"-Xmx{mem}m -Djava.io.tmpdir={tmp}\"",
+    "metadata":"test/sample.tsv",
+    "genes2transcripts":"resources/exampleGene2TranscriptMap.tsv",
+    "contrasts":"gambiaePM_gambiaeCont_Kisumu",
+    "repeat_modeler":{
+        "threads":4
+    },
+    "jarkit_wgscoverageplotter":{
+        "mem": 1024
+    },
     "fastqc": {
         "mem": 1024,
         "threads": 8
@@ -39,6 +49,16 @@
             "threads": 8,
             "mem": 8,
             "java_opts": "-Xmx8g"     
+        },
+        "mark_duplicates": {
+            "threads": 8,
+            "mem": 8192,
+            "extra": "REMOVE_DUPLICATES=true",
+            "java_opts": "-Xmx8g"
         }
+    },
+    "samtools_depth": {
+        "threads": 8,
+        "mem": 8192
     }
 }

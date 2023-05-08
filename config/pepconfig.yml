@@ -1,9 +1,9 @@
 pep_version: 2.0.0
-sample_table: "../test/d_longicatena/test_samples.csv" #Change for run
-subsample_table: "../test/d_longicatena/test_subsamples.csv" #Change for run
+sample_table: "../test/r_peoriensis_samples.csv" #Change for run
+subsample_table: "../test/r_peoriensis_subsamples.csv" #Change for run
 sample_modifiers:
   append:
-    raw_data: "test/d_longicatena/paired_end/" #Change for run
+    raw_data: "/Users/kananen/Documents/workspace/bradley_lab/christian/R_peoriensis/" #Change for run
   duplicate:
     sample_type: reads
   derive:

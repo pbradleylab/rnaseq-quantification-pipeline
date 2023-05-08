@@ -11,11 +11,9 @@ include: "rules/alignment.smk"
 include: "rules/quality_control.smk"
 include: "rules/trimming.smk"
 include: "rules/resources.smk"
+include: "rules/differential_expression.smk"
 
 rule all:
     input: 
         expand(rules.multiqc.output[0], project=pep.sample_table.project.unique().tolist()),
-        expand(rules.merge_kallisto.output[0], project=pep.sample_table.project.unique().tolist()),
-        expand(rules.merge_kallisto.output[1], project=pep.sample_table.project.unique().tolist())
-
-    
+        expand(rules.merge_kallisto.output[0], project=pep.sample_table.project.unique().tolist())

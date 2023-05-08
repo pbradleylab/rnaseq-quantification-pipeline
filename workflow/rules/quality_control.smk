@@ -2,7 +2,7 @@
 """
 from scripts.utils import *
 configfile: "config/config.json"
-include: "resources.smk"
+include: "differential_expression.smk"
 
 def get_fastq_input(wildcards):
     return get_subsample_attributes(wildcards.subsample, "reads", pep)
@@ -16,6 +16,7 @@ def get_multiqc_subsamples(wildcards):
         metricsLST.append(rules.fastqc.output[0].format(project=project, subsample=subsample))
         metricsLST.append(rules.fastq_screen.output[0].format(project=project, subsample=subsample))
         metricsLST.append(rules.kallisto.output[0].format(project=project, subsample=subsample))
+        #metricsLST.append(rules.differential_gene_expression.output[0].format(project=project, subsample=subsample))
 
     return metricsLST
 
@@ -24,22 +25,24 @@ def get_multiqc_subsamples(wildcards):
 # Offical documentation: https:/www.bioinformatics.babraham.ac.uk/projects/fastq_screen/
 rule fastq_screen:
     input: 
-        unpack(get_fastq_input),
-        rules.download_fastq_screen_genomes.output
-    output:"results/{project}/reports/fastq_screen/{subsample}/FastQ_Screen_Genomes_screen.txt"
+        refs=rules.download_fastq_screen_genomes.output,
+        read1=rules.symlink_files.output[0],
+        read2=rules.symlink_files.output[1]
+    output:"results/{project}/reports/fastq_screen/{subsample}/{subsample}_R1_screen.html"
     params:
         fastq_screen_config="config/fastq_screen_config.conf",
         subset=config["fastq_screen"]["subset"],
         aligner=config["fastq_screen"]["aligner"],
         out_dir="results/{project}/reports/fastq_screen/{subsample}/",
         subsample="{subsample}"
-    log: "logs/{project}/fastq_screen/{subsample}.log"
+    log: "logs/{project}/reports/fastq_screen/{subsample}.log"
     threads: config["fastq_screen"]["threads"]
     resources: mem_mb = config["fastq_screen"]["mem"]
     conda: "../envs/quality_control.yml"
     shell: 
         """
-        fastq_screen --outdir {params.out_dir} --force --aligner {params.aligner} --conf {params.fastq_screen_config} --subset {params.subset} --threads {threads} {input}
+        echo {output}
+        fastq_screen --outdir {params.out_dir} --force --aligner {params.aligner} --conf {params.fastq_screen_config} --subset {params.subset} --threads {threads} {input.read1} {input.read2} 2> {log}
         """
 
 # FastQC is a quality control application for high throughput sequence data. 
@@ -48,9 +51,11 @@ rule fastq_screen:
 # based report which can be integrated into a pipeline.
 #Offical Documentation: https:/www.bioinformatics.babraham.ac.uk/projects/fastqc/
 rule fastqc:
-    input: unpack(get_fastq_input)
-    output: "results/{project}/reports/fastqc/{subsample}_R1_001_fastqc.zip"
-    log: "logs/{project}/fastqc/{subsample}.log"
+    input:
+        read1=rules.symlink_files.output[0],
+        read2=rules.symlink_files.output[1]
+    output: "results/{project}/reports/fastqc/{subsample}_R1_fastqc.zip"
+    log: "logs/{project}/reports/fastqc/{subsample}.log"
     params:
         out_dir="results/{project}/reports/fastqc/",
         subsample="{subsample}"
@@ -60,7 +65,22 @@ rule fastqc:
     shell: 
         """
         mkdir -p {params.out_dir}
-        fastqc {input} --extract -t {threads} -o {params.out_dir}
+        fastqc {input.read1} {input.read2} --extract -t {threads} -o {params.out_dir} 2> {log}
+        """
+
+rule samtools_depth:
+    input: rules.mark_duplicates.output.bam
+    output: "results/{project}/reports/samtools_depth/{subsample}.coverage"
+    params:
+        out_dir="results/{project}/reports/samtools_depth/",
+        subsample="{subsample}"
+    log: "logs/{project}/samtools_depth/{subsample}.log"
+    threads: config["samtools_depth"]["threads"]
+    resources: mem_mb = config["samtools_depth"]["mem"]
+    conda: "../envs/quality_control.yml"
+    shell: 
+        """
+        samtools depth {input} > {output} 2> {log}
         """
 
 # Generates html reports of analysis / QC done using MultiQC
@@ -71,14 +91,14 @@ rule fastqc:
 rule multiqc:
     input:get_multiqc_subsamples
     output: 
-        html="results/{project}/reports/multiqc/multiqc_report.html"
+        html="results/{project}/final/multiqc/multiqc_report.html"
     params:
         search=directory("results"),
-        output_dir=directory("results/{project}/reports/multiqc/")
-    log: "logs/{project}/multiqc/reports/multiqc_report.log"
+        output_dir=directory("results/{project}/final/multiqc/")
+    log: "logs/{project}/reports/multiqc/multiqc_report.log"
     resources: mem_mb = config["multiqc"]["mem"]
     conda: "../envs/quality_control.yml"
     shell:
         """
-        multiqc -f {params.search} --cl-config log_filesize_limit:2000000000 --outdir {params.output_dir}
+        multiqc -f {params.search} --cl-config log_filesize_limit:2000000000 --outdir {params.output_dir} 2> {log}
         """

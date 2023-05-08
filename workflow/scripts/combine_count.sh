@@ -1,0 +1,2 @@
+ls -1 $2*/abundance.tsv | perl -ne 'chomp $_; if ($_ =~ /(\S+)\/abundance\.tsv/){print "\t$1"}' | perl -ne 'print "target_id\ttest_counts$_\n"' | sed "s/results\/$1\/quantification\/kallisto\///g" > $3
+paste $2*/abundance.tsv | cut -f 1,2,4,9,14,19,24,29 | grep -v "est_counts" >> $3

@@ -1,0 +1,2 @@
+ls -1 $2*/abundance.tsv | perl -ne 'chomp $_; if ($_ =~ /(\S+)\/abundance\.tsv/){print "\t$1"}' | perl -ne 'print "target_id\tlength$_\n"' | sed "s/results\/$1\/quantification\/kallisto\///g" > $3
+paste $2*/abundance.tsv | cut -f 1,2,5,10,15,20,25,30 | grep -v "tpm" >> $3

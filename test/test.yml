@@ -1,0 +1,7 @@
+name: test
+channels:
+  - anaconda
+  - bioconda
+  - conda-forge
+dependencies:
+  - rhash=1.4.1

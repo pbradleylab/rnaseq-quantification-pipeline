@@ -1,15 +1,16 @@
 rule all:
     input:
-        "Mycolicibacterium_smegmatis.gff",
-        "Mycolicibacterium_smegmatis.fa",
-        "Mycolicibacterium_smegmatis/SRR23849749_GSM7093845_Control_strain_in_hypoxia_at_9_minutes_after_rifampicin_treatment_replicate_3_Mycolicibacterium_smegmatis_OTHER_1.fastq.gz",
-        "Mycolicibacterium_smegmatis/SRR23849749_GSM7093845_Control_strain_in_hypoxia_at_9_minutes_after_rifampicin_treatment_replicate_3_Mycolicibacterium_smegmatis_OTHER_2.fastq.gz"
+        "Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.gff",
+        "Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.fa",
+        "Mycolicibacterium_smegmatis/test_1.fastq.gz",
+        "Mycolicibacterium_smegmatis/test_2.fastq.gz",
+        "/tmp/done.0"
 
 rule get_test_samples:
     input: 
     output:
-        r1="Mycolicibacterium_smegmatis/SRR23849749_GSM7093845_Control_strain_in_hypoxia_at_9_minutes_after_rifampicin_treatment_replicate_3_Mycolicibacterium_smegmatis_OTHER_1.fastq.gz",
-        r2="Mycolicibacterium_smegmatis/SRR23849749_GSM7093845_Control_strain_in_hypoxia_at_9_minutes_after_rifampicin_treatment_replicate_3_Mycolicibacterium_smegmatis_OTHER_2.fastq.gz"
+        r1="Mycolicibacterium_smegmatis/test_1.fastq.gz",
+        r2="Mycolicibacterium_smegmatis/test_2.fastq.gz"
     shell: 
         """
         curl -L ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/049/SRR23849749/SRR23849749_1.fastq.gz -o {output.r1}
@@ -18,7 +19,7 @@ rule get_test_samples:
 
 rule get_genome:
     input: 
-    output: "Mycolicibacterium_smegmatis.fa"
+    output: "Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.fa"
     shell: 
         """
         curl -L https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/013/349/145/GCF_013349145.1_ASM1334914v1/GCF_013349145.1_ASM1334914v1_genomic.fna.gz | gunzip > {output}
@@ -26,8 +27,17 @@ rule get_genome:
 
 rule get_gff3:
     input: 
-    output: "Mycolicibacterium_smegmatis.gff"
+    output: "Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.gff"
     shell: 
         """
         curl -L https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/013/349/145/GCF_013349145.1_ASM1334914v1/GCF_013349145.1_ASM1334914v1_genomic.gff.gz | gunzip > {output}
+        """
+
+rule md5checksum:
+    output: "/tmp/done.0"
+    conda: "test.yml"
+    shell: 
+        """
+        pwd
+        cd Mycolicibacterium_smegmatis && rhash --check test.md5 && touch {output}
         """

@@ -4,14 +4,14 @@ from snakemake.utils import min_version
 min_version("6.0") # Enforces minimum conda version ~
 
 configfile: "config/config.json"
+configfile: "config/tools.json"
 pepfile: config["pepfile"]
 
 include: "rules/quantification.smk"
-include: "rules/alignment.smk"
-include: "rules/quality_control.smk"
+include: "rules/metrics.smk"
 include: "rules/trimming.smk"
+include: "rules/utilities.smk"
 include: "rules/resources.smk"
-include: "rules/differential_expression.smk"
 
 rule all:
     input: 

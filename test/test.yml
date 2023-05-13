@@ -1,7 +1,7 @@
+name: test
 channels:
   - anaconda
   - bioconda
   - conda-forge
 dependencies:
-  - kallisto=0.48.0
-  - star=2.7.0
+  - rhash=1.4.1

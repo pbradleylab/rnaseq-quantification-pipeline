@@ -6,5 +6,6 @@ dependencies:
   - multiqc=1.14
   - fastqc=0.12.1
   - fastq-screen=0.15.3
-  - samtools=1.17
-  - jvarkit-wgscoverageplotter=20201223
+  - htslib=1.12
+  - samtools=1.12
+  - mosdepth=0.3.2

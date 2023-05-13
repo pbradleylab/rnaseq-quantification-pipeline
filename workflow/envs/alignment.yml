@@ -1,9 +1,0 @@
-channels:
-  - anaconda
-  - bioconda
-  - conda-forge
-dependencies:
- - hisat2=2.2.1
- - picard=3.0.0
- - bedtools=2.30.0
- - samtools=1.17

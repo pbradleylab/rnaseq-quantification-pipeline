@@ -6,4 +6,5 @@ dependencies:
   - fastq-screen=0.15.3
   - gffread=0.12.7
   - samtools=1.17
+  - star=2.7.0
   - wget

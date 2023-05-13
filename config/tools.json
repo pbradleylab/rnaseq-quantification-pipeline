@@ -37,7 +37,8 @@
         "mem": 1024
     },
     "kallisto": {
-        "mem": 1024
+        "mem": 1024,
+        "threads": 8
     },
     "hisat2": {
         "mem": 1024

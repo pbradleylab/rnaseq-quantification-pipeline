@@ -9,7 +9,7 @@ This workflow expects that you have [conda](https://docs.conda.io/en/latest/mini
 
 That's it! If you have downloaded snakemake, the rest of the dependencies will be downloaded automatically for you via the workflow.
 
-### Prepare the input files.
+### Prepare the input files
 In this pipeline we are using PEP which allows for easier portability between projects. You need to alter some of the files and generate two `.tsv`.
 
 1. Edit the config/pepconfig.yml file's `raw_data:` string to be where your files are located at. Make sure to use the full path to avoid any errors.

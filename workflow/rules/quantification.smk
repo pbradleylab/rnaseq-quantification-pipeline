@@ -3,10 +3,6 @@
 include: "metrics.smk"
 include: "trimming.smk"
 
-def make_index_cuttings():
-
-
-
 # kallisto is a program for quantifying abundances of transcripts from bulk 
 # and single-cell RNA-Seq data, or more generally of target sequences using 
 # high-throughput sequencing reads.

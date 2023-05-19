@@ -3,9 +3,9 @@
 This workflow expects that you have [conda](https://docs.conda.io/en/latest/miniconda.html) installed prior to starting. Conda is very easy to install in general and will allow you to easily install the other dependencies needed in this workflow. then you will need to download this repository via git clone.
 
 1. Activate your conda environment so that you are in the "base" environment. This can be achieved by running a source /path/to/conda/install/folder/bin/activate
-2. Create a new environment named "snakemake" by running `conda create -n snakemake`. Then activate it by running `conda activate snakemake`
-3. Install snakemake into the environment by running `conda install -c bioconda snakemake`.
-4. Run `snakemake --use-conda --cores 2 -n` to test if everythign is installed correctly. If not, then you'll need to trouble shoot your environment.
+2. Make sure you have your channels set up to allow conda-forge by running `conda config --add channels conda-forge`
+3. Install snakemake into a new environment by running `conda create -n snakemake -c bioconda snakemake=7.25.4`. Then activate it by running `conda activate snakemake`
+4. Move into the directory `cd rnaseq-pipeline` and run `snakemake --use-conda --cores 2 -n` to test if everything is installed correctly. If not, then you'll need to trouble shoot your environment.
 
 That's it! If you have downloaded snakemake, the rest of the dependencies will be downloaded automatically for you via the workflow.
 

@@ -14,6 +14,18 @@ rule download_fastq_screen_genomes:
         mv {params.folder_name} {output}
         """
 
+# Downlaod the default databases fro a gunc run on input reference
+rule download_gunc_db:
+    output: 
+        output_dir=directory("resources/gunc/"),
+        db="resources/gunc/gunc_db_progenomes2.1.dmnd"
+    conda: "../envs/resources.yml"
+    shell:
+        """
+        mkdir -p {output}
+        gunc download_db {output}
+        """
+
 # Generate the transcriptome file.
 rule gffread:
     input:
@@ -38,4 +50,18 @@ rule kallisto_index:
         """
         kallisto index -i {params.name}.kallisto.index {input} -h
         mv {params.name}.kallisto.index resources/{params.name}
+        """
+
+# Generate the STAR index
+rule star_index:
+    input: rules.gffread.output
+    output: "resources/"+config["genome_name"]+"/"+config["genome_name"]+".kallisto.index"
+    params:
+        genome_dir=config["star"]["genome_dir"]
+    resources: mem=config["star"]["mem"]
+    threads: config["star"]["threads"]
+    conda: "../envs/quantification.yml"
+    shell:
+        """
+        STAR --runThreadN {threads} --runMode genomeGenerate --genomeDir {params.genome_dir} --genomeFastaFiles {input}
         """

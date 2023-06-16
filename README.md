@@ -29,10 +29,13 @@ In this pipeline we are using PEP which allows for easier portability between pr
 `genome`: To be the path to where your genome.fa is.
 `genome_name`: To be the exact name of your genome including the fasta.
 `gff3`: To be the path where the gff3 file is location.
+`run_gunc`: Put either "true" of flase, to choose to run GUNC on the reference genome being used.
+`quantification_tool`: Put either "kallisto" or "star" to choose which aligner you use.
 
 ### Run The Workflow
 You should be good to go. Resources are automatically downloaded for tools that need them in the `resouces/` folder. This may take an hour or so after running. At the ened you will get two combined matrices of counts and TPM from the quantification.
 1. To run the workflow enter `snakemake --use-conda -j --cores 4` if the workflow is failing at a certain point, you can still generate some of the data *likely by running it with the `-k` flag as well.
+NOTE:: You can also run the workflow on slurm by using `snakemake --slurm --default-resources slurm_account=osc_account_number -j --use-conda`.
 
 TIP: If you want to run multiple samples, move them all to the same directory (or symlink them to save space), and design your input sheet to have different `project` ids. 
 

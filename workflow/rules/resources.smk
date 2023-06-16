@@ -1,6 +1,15 @@
 """ Add rules to this section that are related to resource tranfsormtion for use in workflow, 
 retrival, and mangement.
 """
+def get_gff(wildcards):
+    out = []
+    if config["quantification_tool"].lower() == "kalisto":
+        out.append(config["gff3"])
+    elif config["quantification_tool"].lower() == "star":
+        out.append(rules.convert_gff_to_gtf.output[0])
+    return out
+
+
 # Downloads the default necessary resources for checking for contamination 
 # with fastqscreen. Admittedly, not all of the genomes need/are to be used.
 rule download_fastq_screen_genomes:
@@ -26,6 +35,30 @@ rule download_gunc_db:
         gunc download_db {output}
         """
 
+# To run, STAR needs the 3rd column to have exons as the labels not CDS or gene.
+rule clean_star_gff:
+    input: config["gff3"]
+    output: "resources/"+config["genome_name"]+"/star.gff"
+    resources:mem=config["star"]["mem"]
+    shell:
+        """
+        cut -f3 {input} | sort | uniq | grep -v "#" > /tmp/clean_star_gff.tmp
+        for molecule_type in $(cat /tmp/clean_star_gff.tmp);
+        do
+            sed "s/$molecule_type	/exon	/g" {input} > {output}
+        done
+        echo Cleaned Input GFF for STAR: {output}
+        """
+
+rule convert_gff_to_gtf:
+    input: rules.clean_star_gff.output
+    output: "resources/"+config["genome_name"]+"/star.gtf"
+    conda: "../envs/resources.yml"
+    shell:
+        """
+        gffread {input} -T -o {output}
+        """
+
 # Generate the transcriptome file.
 rule gffread:
     input:
@@ -35,7 +68,7 @@ rule gffread:
     conda: "../envs/resources.yml"
     shell:
         """
-        gffread -w {output} -g {input.ref} --gtf {input.gff3}
+        gffread -w {output} -g {input.ref} --gtf {input.gff3} -F
         """
 
 # Generate the Kallisto index
@@ -54,14 +87,15 @@ rule kallisto_index:
 
 # Generate the STAR index
 rule star_index:
-    input: rules.gffread.output
-    output: "resources/"+config["genome_name"]+"/"+config["genome_name"]+".kallisto.index"
-    params:
-        genome_dir=config["star"]["genome_dir"]
+    input: 
+        ref=rules.gffread.output,
+        cleaned_gff=rules.convert_gff_to_gtf.output
+    output: directory("resources/star/")
     resources: mem=config["star"]["mem"]
     threads: config["star"]["threads"]
     conda: "../envs/quantification.yml"
     shell:
         """
-        STAR --runThreadN {threads} --runMode genomeGenerate --genomeDir {params.genome_dir} --genomeFastaFiles {input}
+        mkdir -p {output}
+        STAR --runThreadN {threads} --runMode genomeGenerate --genomeDir {output} --genomeFastaFiles {input.ref} --sjdbGTFfile {input.cleaned_gff}
         """

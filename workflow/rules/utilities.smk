@@ -31,7 +31,7 @@ rule symlink_files:
         """
 
 # Generates an bai index for a bam
-rule samtoolsIndex:
+rule samtools_index:
     input: "{BAM}.bam"
     output: "{BAM}.bam.bai"
     resources:mem_mb=1024

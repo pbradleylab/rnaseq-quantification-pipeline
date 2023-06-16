@@ -25,6 +25,24 @@ rule kallisto:
         kallisto quant -t {threads} -i {input.index} -o {params.outdir} {input.reads}
         """
 
+rule star:
+    input: 
+        reads=rules.trim_galore.output,
+        transcriptome=rules.gffread.output,
+        index=rules.star_index.output
+    output: "results/{project}/quantification/kallisto/{subsample}/abundance.h5"
+    log: "logs/{project}/quantification/kallisto/{subsample}.log"
+    params:
+        outdir="results/{project}/quantification/kallisto/{subsample}/",
+        genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index"
+    threads:config["kallisto"]["threads"]
+    resources: mem=config["kallisto"]["mem"]
+    conda: "../envs/quantification.yml"
+    shell:
+        """
+        kallisto quant -t {threads} -i {input.index} -o {params.outdir} {input.reads}
+        """
+        
 rule merge_kallisto:
     input: rules.multiqc.output
     output:

@@ -3,9 +3,9 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
+  - multiqc=1.14
+  - fastqc=0.12.1
   - fastq-screen=0.15.3
-  - gffread=0.12.7
-  - samtools=1.17
-  - star=2.7.0
+  - htslib=1.12
+  - samtools=1.12
   - gunc=1.0.5
-  - wget

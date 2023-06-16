@@ -9,10 +9,6 @@
         "mem": 1024,
         "threads": 8
     },
-    "mosdepth": {
-        "mem": 1024,
-        "threads": 8
-    },
     "star": {
         "mem": 1024,
         "threads": 8,
@@ -64,6 +60,10 @@
             "extra": "REMOVE_DUPLICATES=true",
             "java_opts": "-Xmx8g"
         }
+    },
+    "gunc": {
+        "threads": 4,
+        "mem": 8192
     },
     "samtools_depth": {
         "threads": 8,

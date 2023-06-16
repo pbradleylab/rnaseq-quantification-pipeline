@@ -16,15 +16,54 @@ def get_multiqc_subsamples(wildcards):
         # Always run rules on the outside
         metricsLST.append(rules.fastqc.output[0].format(project=project, subsample=subsample))
         metricsLST.append(rules.fastq_screen.output[0].format(project=project, subsample=subsample))
-        metricsLST.append(rules.kallisto.output[0].format(project=project, subsample=subsample))
+        if config["quantification_tool"].lower() == "kalisto":
+            metricsLST.append(rules.kallisto.output[0].format(project=project, subsample=subsample))
+        elif config["quantification_tool"].lower() == "star":
+            metricsLST.append(rules.star.output[0].format(project=project, subsample=subsample))
+        if config["run_gunc"].lower() == "true":
+            metricsLST.append(rules.gunc_plot.output[0].format(project=project, subsample=subsample))
 
     return metricsLST
+
+# Run Gunc on the reference being used to make sure base assumptions are
+# okay about reference being used before inferring anything else based on it
+# This shoudl be run for both in house and genomes from sources like NCBI
+rule gunc_run:
+    input:
+        ref=config["genome"],
+        db=rules.download_gunc_db.output.db
+    output: "results/{project}/reports/gunc_run/diamond_output/{project}.diamond.progenomes_2.1.out"
+    log: "logs/{project}/reports/gunc_run/{project}_run.log"
+    params:
+        out_dir=directory("results/{project}/reports/gunc_run/")
+    threads: config["gunc"]["threads"]
+    resources: mem_mb = config["gunc"]["mem"]
+    conda: "../envs/metrics.yml"
+    shell: 
+        """
+        mkdir -p {params.out_dir}
+        gunc run --threads {threads} --temp_dir /tmp/ -i {input.ref} --db_file {input.db} --out_dir {params.out_dir} 2> {log}
+        """
+
+# Plot Gunc output from run
+rule gunc_plot:
+    input: 
+        ref=config["genome"],
+        diamond=rules.gunc_run.output
+    output:directory("results/{project}/reports/gunc_plot/")
+    log: "logs/{project}/reports/gunc_plot/gunc_plot.log"
+    conda: "../envs/metrics.yml"
+    shell:
+        """
+        mkdir -p {output}
+        gunc plot --diamond_file {input.diamond} --out_dir {output}
+        """
 
 # Calculates the contamination accross in the samples.
 # The config must be supplied when calling this rule.
 # Offical documentation: https:/www.bioinformatics.babraham.ac.uk/projects/fastq_screen/
 rule fastq_screen:
-    input: 
+    input:
         refs=rules.download_fastq_screen_genomes.output,
         read1=rules.symlink_files.output[0],
         read2=rules.symlink_files.output[1]
@@ -38,7 +77,7 @@ rule fastq_screen:
     log: "logs/{project}/reports/fastq_screen/{subsample}.log"
     threads: config["fastq_screen"]["threads"]
     resources: mem_mb = config["fastq_screen"]["mem"]
-    conda: "../envs/quality_control.yml"
+    conda: "../envs/metrics.yml"
     shell: 
         """
         fastq_screen --outdir {params.outdir} --force --aligner {params.aligner} --conf {params.fastq_screen_config} --subset {params.subset} --threads {threads} {input.read1} {input.read2} 2> {log}
@@ -60,7 +99,7 @@ rule fastqc:
         subsample="{subsample}"
     threads: config["fastqc"]["threads"]
     resources: mem_mb = config["fastqc"]["mem"]
-    conda: "../envs/quality_control.yml"
+    conda: "../envs/metrics.yml"
     shell: 
         """
         mkdir -p {params.outdir}
@@ -82,7 +121,7 @@ rule multiqc:
         output_dir=directory("results/{project}/final/multiqc/")
     log: "logs/{project}/reports/multiqc/multiqc_report.log"
     resources: mem_mb = config["multiqc"]["mem"]
-    conda: "../envs/quality_control.yml"
+    conda: "../envs/metrics.yml"
     shell:
         """
         multiqc -f {params.search} --cl-config log_filesize_limit:2000000000 --outdir {params.output_dir} 2> {log}

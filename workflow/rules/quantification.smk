@@ -46,34 +46,20 @@ rule star:
         reads=rules.trim_galore.output,
         transcriptome=rules.gffread.output,
         index=rules.star_index.output
-    output: "results/{project}/quantification/star/{subsample}/abundance.h5"
+    output: "results/{project}/quantification/star/{subsample}/Aligned.toTranscriptome.out.bam"
+    log: "logs/{project}/quantification/star/{subsample}.log"
     params:
         outdir="results/{project}/quantification/star/{subsample}/",
         genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
-        gff=config["gff3"]
+        read_files=config["star"]["read_files"],
+        gff=config["gff3"],
+        bam_type=config["star"]["type"]
     threads:config["star"]["threads"]
     resources: mem=config["star"]["mem"]
     conda: "../envs/quantification.yml"
     shell:
         """
-        STAR --genomeDir {input.index} --outFileNamePrefix {params.outdir} --readFilesCommand gunzip -c --readFilesIn {input.reads}
+        STAR --runThreadN {threads} --genomeDir {input.index} --readFilesIn {input.reads} \
+                --readFilesCommand {params.read_files} --outSAMtype {params.bam_type} \
+                --quantMode TranscriptomeSAM --outFileNamePrefix {params.outdir} %> {log}
         """
-
-# rule star:
-#     input: rules.trim_galore.output
-#     output: "../results/{project}/alignment/star/{subsample}Aligned.toTranscriptome.out.bam"
-#     params:
-#         name="{subsample}",
-#         outputDir="../results/{project}/alignment/star/",
-#         readFilesCommand=config["star"]["read_files"],
-#         genomeDir="resources/star/"
-#     log: "logs/{project}/quantification/star/{subsample}.log"
-#     threads: config["star"]["threads"]
-#     resources: mem=config["star"]["mem"]
-#     conda: "../envs/quantification.yml"
-#     shell:
-#         """
-#         STAR --runThreadN {threads} --genomeDir {params.genomeDir} --readFilesIn {input.reads} --readFilesCommand {params.readFilesCommand} --outSAMtype BAM Unsorted --quantMode TranscriptomeSAM --outFileNamePrefix {params.name} %> {log}
-#         mkdir -p {params.outputDir}
-#         mv $(pwd)/{params.name}* {params.outputDir}
-#         """

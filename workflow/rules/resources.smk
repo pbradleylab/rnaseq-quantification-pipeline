@@ -35,30 +35,6 @@ rule download_gunc_db:
         gunc download_db {output}
         """
 
-# To run, STAR needs the 3rd column to have exons as the labels not CDS or gene.
-rule clean_star_gff:
-    input: config["gff3"]
-    output: "resources/"+config["genome_name"]+"/star.gff"
-    resources:mem=config["star"]["mem"]
-    shell:
-        """
-        cut -f3 {input} | sort | uniq | grep -v "#" > /tmp/clean_star_gff.tmp
-        for molecule_type in $(cat /tmp/clean_star_gff.tmp);
-        do
-            sed "s/$molecule_type	/exon	/g" {input} > {output}
-        done
-        echo Cleaned Input GFF for STAR: {output}
-        """
-
-rule convert_gff_to_gtf:
-    input: rules.clean_star_gff.output
-    output: "resources/"+config["genome_name"]+"/star.gtf"
-    conda: "../envs/resources.yml"
-    shell:
-        """
-        gffread {input} -T -o {output}
-        """
-
 # Generate the transcriptome file.
 rule gffread:
     input:
@@ -70,7 +46,7 @@ rule gffread:
         """
         gffread -w {output} -g {input.ref} --gtf {input.gff3} -F
         """
-
+        
 # Generate the Kallisto index
 rule kallisto_index:
     input: rules.gffread.output
@@ -85,11 +61,20 @@ rule kallisto_index:
         mv {params.name}.kallisto.index resources/{params.name}
         """
 
+rule convert_gff_to_gtf:
+    input: config["gff3"]
+    output: "resources/"+config["genome_name"]+"/star.gtf"
+    conda: "../envs/resources.yml"
+    shell:
+        """
+        gffread {input} -T -o {output}
+        """
+
 # Generate the STAR index
 rule star_index:
     input: 
-        ref=rules.gffread.output,
-        cleaned_gff=rules.convert_gff_to_gtf.output
+        ref=config["genome"],
+        gff=rules.convert_gff_to_gtf.output
     output: directory("resources/star/")
     resources: mem=config["star"]["mem"]
     threads: config["star"]["threads"]
@@ -97,5 +82,5 @@ rule star_index:
     shell:
         """
         mkdir -p {output}
-        STAR --runThreadN {threads} --runMode genomeGenerate --genomeDir {output} --genomeFastaFiles {input.ref} --sjdbGTFfile {input.cleaned_gff}
+        STAR --runThreadN {threads} --runMode genomeGenerate --genomeDir {output} --genomeFastaFiles {input.ref} --sjdbGTFfile {input.gff}
         """

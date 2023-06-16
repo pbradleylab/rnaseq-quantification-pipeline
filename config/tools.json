@@ -14,7 +14,7 @@
         "threads": 8,
         "read_files": "gunzip -c",
         "type": "BAM Unsorted",
-        "quant_mode": "alignReads"
+        "quant_mode": "TranscriptomeSAM"
     },
     "fastq_screen": {
         "threads": 8,

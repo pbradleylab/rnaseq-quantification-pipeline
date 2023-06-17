@@ -19,7 +19,8 @@ def get_multiqc_subsamples(wildcards):
         if config["quantification_tool"].lower() == "kalisto":
             metricsLST.append(rules.kallisto.output[0].format(project=project, subsample=subsample))
         elif config["quantification_tool"].lower() == "star":
-            metricsLST.append(rules.star.output[0].format(project=project, subsample=subsample))
+            metricsLST.append(rules.star_reads_per_gene.output[0].format(project=project, subsample=subsample))
+            metricsLST.append(rules.star_reads_per_transcript.output[0].format(project=project, subsample=subsample))
         if config["run_gunc"].lower() == "true":
             metricsLST.append(rules.gunc_plot.output[0].format(project=project, subsample=subsample))
 

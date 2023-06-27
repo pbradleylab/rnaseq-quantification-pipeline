@@ -1,0 +1,12 @@
+me: DESeq
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base=4.0
+  - r-dplyr=1.1.2
+  - r-tidyverse=2.0.0
+  - r-ggrepel=0.9.3
+  - r-stringr=1.5.0
+  - bioconductor-deseq=1.39.0

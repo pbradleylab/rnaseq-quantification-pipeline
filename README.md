@@ -48,5 +48,10 @@ Quality Control:
     Fastqc
     Multiqc
 
-This is an example DAG for an analysis run with 6 samples.
+### This is an example DAG for an analysis run with 6 samples.
+
 ![Workflow DAG](/images/dag.svg)
+Solid lines indicate the rules that have not been executed yet, whereas dashed lines depict completed jobs at time of the dag generation.
+
+# Common FAQ
+`list index out of range` Error: If you recieve an error that says `list index out of range` and the traceback points to `get_r1_fastq` or `get_r2_fastq` as the reason. More often than not the problem is in how the sample name is being given in the sample and subsample.tsv files. A common error is that the R1 or R2 extension is not recognized or it is being duplicated. When inputing the sample names, you do not need to include R1 or R2 in the name. Only include the file name up until the last . or _ before the paired read name. Recognized file endings are `_R1`, `.R1`, `.r1`, `_r1`, `_1` with the ending `fastq.gz` or `fq.gz`. If the error persists please feel free to submit an issue.

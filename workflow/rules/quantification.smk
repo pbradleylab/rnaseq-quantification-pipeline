@@ -53,7 +53,8 @@ rule star_reads_per_gene:
         genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
         read_files=config["star"]["read_files"],
         gff=config["gff3"],
-        bam_type=config["star"]["type"]
+        bam_type=config["star"]["type"],
+        other=config["star"]["other"]
     threads:config["star"]["threads"]
     resources: mem=config["star"]["mem"]
     conda: "../envs/quantification.yml"
@@ -61,7 +62,8 @@ rule star_reads_per_gene:
         """
         STAR --runThreadN {threads} --genomeDir {input.index} --readFilesIn {input.reads} \
                 --readFilesCommand {params.read_files} --outSAMtype {params.bam_type} \
-                --quantMode GeneCounts --outFileNamePrefix {params.outdir} %> {log}
+                --quantMode GeneCounts --outFileNamePrefix {params.outdir} %> {log} \
+                {params.other}
         """
 
 rule star_reads_per_transcript:
@@ -76,7 +78,8 @@ rule star_reads_per_transcript:
         genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
         read_files=config["star"]["read_files"],
         gff=config["gff3"],
-        bam_type=config["star"]["type"]
+        bam_type=config["star"]["type"],
+        other=config["star"]["other"]
     threads:config["star"]["threads"]
     resources: mem=config["star"]["mem"]
     conda: "../envs/quantification.yml"
@@ -84,5 +87,6 @@ rule star_reads_per_transcript:
         """
         STAR --runThreadN {threads} --genomeDir {input.index} --readFilesIn {input.reads} \
                 --readFilesCommand {params.read_files} --outSAMtype {params.bam_type} \
-                --quantMode TranscriptomeSAM --outFileNamePrefix {params.outdir} %> {log}
+                --quantMode TranscriptomeSAM --outFileNamePrefix {params.outdir} %> {log} \
+                {params.other}
         """

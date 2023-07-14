@@ -26,8 +26,8 @@ rule symlink_files:
     resources:mem_mb=1024
     shell:
         """
-        ln -s $PWD/{input.read1} {output.read1}
-        ln -s $PWD/{input.read2} {output.read2}
+        ln -s {input.read1} {output.read1}
+        ln -s {input.read2} {output.read2}
         """
 
 # Generates an bai index for a bam

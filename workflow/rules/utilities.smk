@@ -29,11 +29,3 @@ rule symlink_files:
         ln -s {input.read1} {output.read1}
         ln -s {input.read2} {output.read2}
         """
-
-# Generates an bai index for a bam
-rule samtools_index:
-    input: "{BAM}.bam"
-    output: "{BAM}.bam.bai"
-    resources:mem_mb=1024
-    conda: "../envs/alignment.yml"
-    shell:"samtools index {input}"

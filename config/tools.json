@@ -12,10 +12,10 @@
     "star": {
         "mem": 1024,
         "threads": 8,
-        "genome_dir":"resources/star",
         "read_files": "gunzip -c",
         "type": "BAM Unsorted",
-        "quant_mode": "alignReads"
+        "quant_mode": "TranscriptomeSAM",
+        "other": ""
     },
     "fastq_screen": {
         "threads": 8,

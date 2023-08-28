@@ -3,7 +3,7 @@
 def get_r1_fastqs(wildcards):
     out = {} # Dictionary that will hold two reads with r1 in index 0 and r2 in index 1
     reads = get_subsample_attributes(wildcards.subsample, "reads", pep)
-    r1=[x for x in reads if ("_R1" in x or ".R1" in x or ".r1" in x or "_r1" in x or "_2.fq" in x or "_1.fastq" in x)]
+    r1=[x for x in reads if ("_R1" in x or ".R1" in x or ".r1" in x or "_r1" in x or "_1.fq" in x or "_1.fastq" in x)]
     return r1[0]
 
 def get_r2_fastqs(wildcards):
@@ -26,14 +26,6 @@ rule symlink_files:
     resources:mem_mb=1024
     shell:
         """
-        ln -s $PWD/{input.read1} {output.read1}
-        ln -s $PWD/{input.read2} {output.read2}
+        ln -s {input.read1} {output.read1}
+        ln -s {input.read2} {output.read2}
         """
-
-# Generates an bai index for a bam
-rule samtoolsIndex:
-    input: "{BAM}.bam"
-    output: "{BAM}.bam.bai"
-    resources:mem_mb=1024
-    conda: "../envs/alignment.yml"
-    shell:"samtools index {input}"

@@ -12,8 +12,8 @@ include: "rules/metrics.smk"
 include: "rules/trimming.smk"
 include: "rules/utilities.smk"
 include: "rules/resources.smk"
+include: "rules/deseq.smk"
 
 rule all:
     input: 
-        expand(rules.multiqc.output[0], project=pep.sample_table.project.unique().tolist()),
-        expand(rules.merge_kallisto.output[0], project=pep.sample_table.project.unique().tolist())
+        expand(rules.deseq2.output[0], project=pep.sample_table.project.unique().tolist())

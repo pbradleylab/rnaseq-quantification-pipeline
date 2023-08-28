@@ -28,8 +28,8 @@ rule kallisto:
 rule merge_kallisto:
     input: rules.multiqc.output
     output:
-        "results/{project}/final/quantification/kallisto/transcript_tpms_all_samples.tsv",
-        "results/{project}/final/quantification/kallisto/transcript_counts_all_samples.tsv"
+        tpm="results/{project}/final/quantification/kallisto/transcript_tpms_all_samples.tsv",
+        counts="results/{project}/final/quantification/kallisto/transcript_counts_all_samples.tsv"
     params:
         outdir="results/{project}/quantification/kallisto/",
         project="{project}"
@@ -37,6 +37,6 @@ rule merge_kallisto:
     conda: "../envs/quantification.yml"
     shell:
         """
-        bash workflow/scripts/combine_count.sh {params.project} {params.outdir} {output[0]}
-        bash workflow/scripts/combine_tpm.sh {params.project} {params.outdir} {output[1]}
+        bash workflow/scripts/combine_count.sh {params.project} {params.outdir} {output.tpm}
+        bash workflow/scripts/combine_tpm.sh {params.project} {params.outdir} {output.counts}
         """

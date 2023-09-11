@@ -33,7 +33,7 @@ In this pipeline we are using PEP which allows for easier portability between pr
 `quantification_tool`: Put either "kallisto" or "star" to choose which quantification method you  with to use.
 
 ### Run The Workflow
-You should be good to go. Resources are automatically downloaded for tools that need them in the `resouces/` folder. This may take an hour or so after running. At the ened you will get two combined matrices of counts and TPM from the quantification.
+You should be good to go. Resources are automatically downloaded for tools that need them in the `resouces/` folder. This may take an hour or so after running. At the end, you will get two combined matrices of counts and TPM from the quantification.
 1. To run the workflow enter `snakemake --use-conda -j --cores 4` if the workflow is failing at a certain point, you can still generate some of the data *likely by running it with the `-k` flag as well.
 NOTE:: You can also run the workflow on slurm by using `snakemake --slurm --default-resources slurm_account=osc_account_number -j --use-conda`.
 

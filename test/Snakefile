@@ -69,6 +69,10 @@ rule md5checksum:
     conda: "test.yml"
     shell: 
         """
+<<<<<<< HEAD
         pwd
         cd Mycolicibacterium_smegmatis && rhash --check test.md5 && touch {output}
+=======
+        rhash --check Mycolicibacterium_smegmatis/test.md5 && touch {output}
+>>>>>>> fbabefae31fd6016ff8096c60e2c308b3e2da67f
         """

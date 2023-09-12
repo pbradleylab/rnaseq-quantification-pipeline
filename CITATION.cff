@@ -1,0 +1,13 @@
+cff-version: 1.2.0
+message: "If you use this software, please cite it as below."
+authors:
+- family-names: "Kananen"
+  given-names: "Kathryn"
+  orcid: "https://orcid.org/0000-0001-6080-0323"
+- family-names: "Bradley"
+  given-names: "Patrick"
+  orcid: "https://orcid.org/0000-0002-9231-8344"
+title: "RNASeq quantification pipeline"
+version: 1.0.0
+date-released: 2023-05-30
+url: "https://github.com/pbradleylab/rnaseq-quantification-pipeline.git"

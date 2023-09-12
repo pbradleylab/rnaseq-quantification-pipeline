@@ -9,17 +9,13 @@
         "mem": 1024,
         "threads": 8
     },
-    "mosdepth": {
-        "mem": 1024,
-        "threads": 8
-    },
     "star": {
         "mem": 1024,
         "threads": 8,
-        "genome_dir":"resources/star",
         "read_files": "gunzip -c",
         "type": "BAM Unsorted",
-        "quant_mode": "alignReads"
+        "quant_mode": "TranscriptomeSAM",
+        "other": ""
     },
     "fastq_screen": {
         "threads": 8,
@@ -65,8 +61,16 @@
             "java_opts": "-Xmx8g"
         }
     },
+    "gunc": {
+        "threads": 4,
+        "mem": 8192
+    },
     "samtools_depth": {
         "threads": 8,
         "mem": 8192
+    },
+    "deseq2":{
+        "reference_in_variable":"",
+        "variable_to_analyze":""
     }
 }

@@ -1,2 +1,7 @@
 sample_name,subsample,protocol,seq_method
-test,test,rna,paired_end
+test1,test1,rna,paired_end
+test2,test2,rna,paired_end
+test3,test3,rna,paired_end
+test4,test4,rna,paired_end
+test5,test5,rna,paired_end
+test6,test6,rna,paired_end

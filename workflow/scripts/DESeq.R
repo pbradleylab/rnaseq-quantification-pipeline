@@ -26,8 +26,8 @@ metadata=read.csv(opt$metadata_file, header = TRUE)
 fm = as.formula(paste0("~", opt$variable_to_analyze))
 
 #We need to first change the first column into the row names with the following command
-count_data = count_data %>% remove_rownames %>% column_to_rownames(var = "...1")
-
+count_data = count_data %>% remove_rownames %>% column_to_rownames(var = "target_id")
+count_data = count_data[,-c(1)]
 #if it comes FALSE we need to turn it into a matrix using the following command, if it is TRUE the command is ommited 
 count_data_mtx = as.matrix(count_data)
 
@@ -36,7 +36,7 @@ count_data_mtx = as.matrix(count_data)
 count_data_mtx = ceiling(count_data_mtx)
 
 #Move the first col id names into the rownames so that later can match everything
-metadata = metadata %>% remove_rownames %>% column_to_rownames(var= "...1")
+metadata = metadata %>% remove_rownames %>% column_to_rownames(var= "sample_name")
 
 
 #Now we verify if the names from the data and metadata matches (both must come TRUE)
@@ -51,7 +51,7 @@ dds = DESeqDataSetFromMatrix(countData = count_data_mtx, colData = metadata, des
 
 dds[[opt$variable_to_analyze]] = relevel(dds[[opt$variable_to_analyze]], ref = opt$reference_in_variable)
 
-#now wwe can run the differential gene expression analysis
+#now we can run the differential gene expression analysis
 
 dds = DESeq(dds)
 
@@ -64,3 +64,12 @@ res[order(res$padj),]
 #finally you can import the data
 write.csv(as.data.frame(res[order(res$padj),]), file = opt$output_file)
 }
+
+#Read and assign a variable to the output file
+df = as.data.frame(res[order(res$padj),])
+
+#Generate a preliminary graph for the user to see
+plot = ggplot(df, aes(x=log2FoldChange, y=-log10(pvalue))) + geom_point() + theme_minimal() + scale_color_manual(values=c("blue", "black", "red")) + geom_vline(xintercept=c(-0.6, 0.6), col="red") + geom_hline(yintercept=-log10(0.05), col="red")
+png("volcano_plot.png")
+print(plot)
+dev.off()

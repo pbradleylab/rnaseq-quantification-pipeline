@@ -14,14 +14,16 @@ option_list = list(
 	make_option(c("-r", "--reference_in_variable"),
 			type="character", default=NULL),
 	make_option(c("-o", "--output_file"),
-			type="character", default="output.tsv"))
+			type="character", default="output.tsv"),
+        make_option(c("-p", "--plot_path"),
+                        type="character", default="output.pdf"))
 
 opt_parser = OptionParser(option_list=option_list)
 
 opt = parse_args(opt_parser)
 
 #Assign a variable to both files
-count_data = read.csv(opt$counts_data, header = TRUE)
+count_data = read.csv(opt$counts_data, header = TRUE, sep = "\t")
 metadata=read.csv(opt$metadata_file, header = TRUE)
 fm = as.formula(paste0("~", opt$variable_to_analyze))
 
@@ -70,6 +72,6 @@ df = as.data.frame(res[order(res$padj),])
 
 #Generate a preliminary graph for the user to see
 plot = ggplot(df, aes(x=log2FoldChange, y=-log10(pvalue))) + geom_point() + theme_minimal() + scale_color_manual(values=c("blue", "black", "red")) + geom_vline(xintercept=c(-0.6, 0.6), col="red") + geom_hline(yintercept=-log10(0.05), col="red")
-png("volcano_plot.png")
+pdf(file= opt$plot_path)
 print(plot)
 dev.off()

@@ -31,8 +31,8 @@ rule download_gunc_db:
     conda: "../envs/resources.yml"
     shell:
         """
-        mkdir -p {output}
-        gunc download_db {output}
+        mkdir -p {output.output_dir}
+        gunc download_db {output.output_dir}
         """
 
 # Generate the transcriptome file.

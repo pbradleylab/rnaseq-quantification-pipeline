@@ -16,7 +16,7 @@ def get_multiqc_subsamples(wildcards):
         # Always run rules on the outside
         metricsLST.append(rules.fastqc.output[0].format(project=project, subsample=subsample))
         metricsLST.append(rules.fastq_screen.output[0].format(project=project, subsample=subsample))
-        if config["quantification_tool"].lower() == "kalisto":
+        if config["quantification_tool"].lower() == "kallisto":
             metricsLST.append(rules.kallisto.output[0].format(project=project, subsample=subsample))
         elif config["quantification_tool"].lower() == "star":
             metricsLST.append(rules.star_reads_per_gene.output[0].format(project=project, subsample=subsample))

@@ -12,12 +12,11 @@ def get_multiqc_subsamples(wildcards):
     metricsLST = []
     for subsample in pep.subsample_table.subsample.tolist():
         project = get_subsample_attributes(subsample, "project", pep)
-
         # Always run rules on the outside
         metricsLST.append(rules.fastqc.output[0].format(project=project, subsample=subsample))
         metricsLST.append(rules.fastq_screen.output[0].format(project=project, subsample=subsample))
         if config["quantification_tool"].lower() == "kallisto":
-            metricsLST.append(rules.kallisto.output[0].format(project=project, subsample=subsample))
+            metricsLST.append(rules.merge_kallisto.output[0].format(project=project))
         elif config["quantification_tool"].lower() == "star":
             metricsLST.append(rules.star_reads_per_gene.output[0].format(project=project, subsample=subsample))
             metricsLST.append(rules.star_reads_per_transcript.output[0].format(project=project, subsample=subsample))

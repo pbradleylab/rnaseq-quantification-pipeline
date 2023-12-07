@@ -3,7 +3,7 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - multiqc=1.14
+  - multiqc=1.18
   - fastqc=0.12.1
   - fastq-screen=0.15.3
   - htslib=1.12

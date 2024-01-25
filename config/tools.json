@@ -1,25 +1,15 @@
 {
-    "repeat_modeler":{
-        "threads":4
-    },
-    "jarkit_wgscoverageplotter":{
-        "mem": 1024
-    },
     "fastqc": {
-        "mem": 1024,
-        "threads": 8
-    },
-    "mosdepth": {
         "mem": 1024,
         "threads": 8
     },
     "star": {
         "mem": 1024,
         "threads": 8,
-        "genome_dir":"resources/star",
         "read_files": "gunzip -c",
         "type": "BAM Unsorted",
-        "quant_mode": "alignReads"
+        "quant_mode": "TranscriptomeSAM",
+        "other": ""
     },
     "fastq_screen": {
         "threads": 8,
@@ -40,33 +30,12 @@
         "mem": 1024,
         "threads": 8
     },
-    "hisat2": {
-        "mem": 1024
-    },
-    "mutect2": {
+    "gunc": {
         "threads": 4,
         "mem": 8192
     },
-    "picard": {
-        "collect_insert_size_metrics": {
-            "threads": 8,
-            "mem": 8192,
-            "java_opts": "-Xmx8g"
-        },
-        "collect_rna_seq_metrics":{
-            "threads": 8,
-            "mem": 8,
-            "java_opts": "-Xmx8g"     
-        },
-        "mark_duplicates": {
-            "threads": 8,
-            "mem": 8192,
-            "extra": "REMOVE_DUPLICATES=true",
-            "java_opts": "-Xmx8g"
-        }
-    },
-    "samtools_depth": {
-        "threads": 8,
-        "mem": 8192
+    "deseq2":{
+        "reference_in_variable":"0min",
+        "variable_to_analyze":"Time"
     }
 }

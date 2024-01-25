@@ -2,5 +2,8 @@
     "pepfile":"config/pepconfig.yml",
     "genome":"test/Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.fa", 
     "genome_name":"Mycolicibacterium_smegmatis",
-    "gff3":"test/Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.gff"
+    "gff3":"test/Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.gff",
+    "metadata":"test/Mycolicibacterium_smegmatis/deseq_metadata.csv",
+    "run_gunc":"true",
+    "quantification_tool":"star"
 }

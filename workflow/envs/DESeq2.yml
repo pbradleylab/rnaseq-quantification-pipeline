@@ -1,0 +1,14 @@
+name: DESeq_environment
+channels:
+  - conda-forge
+  - bioconda
+  - defaults
+dependencies:
+  - r-base=4.0
+  - r-dplyr
+  - r-ggplot2
+  - r-reshape2
+  - r-tidyverse
+  - r-optparse
+  - r-stringr
+  - bioconductor-deseq2

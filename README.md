@@ -29,10 +29,13 @@ In this pipeline we are using PEP which allows for easier portability between pr
 `genome`: To be the path to where your genome.fa is.
 `genome_name`: To be the exact name of your genome including the fasta.
 `gff3`: To be the path where the gff3 file is location.
+`run_gunc`: Put either "true" of flase, to choose to run GUNC on the reference genome being used.
+`quantification_tool`: Put either "kallisto" or "star" to choose which quantification method you  with to use.
 
 ### Run The Workflow
 You should be good to go. Resources are automatically downloaded for tools that need them in the `resouces/` folder. This may take an hour or so after running. At the ened you will get two combined matrices of counts and TPM from the quantification.
-1. To run the workflow enter `snakemake --use-conda -j --cores 4` if the workflow is failing at a certain point, you can still generate some of the data *likely by running it with the `-k` flag as well.
+1. To run the workflow enter `snakemake --use-conda -j --cores 4` in the `rnaseq-quantification-pipeline` directory. Make sure you are *not* trying to run the quantification pipeline in the `test` or `workflow` directories. If the workflow is failing at a certain point, you can still generate some of the data *likely by running it with the `-k` flag as well.
+NOTE:: You can also run the workflow on slurm by using `snakemake --slurm --default-resources slurm_account=osc_account_number -j --use-conda`.
 
 TIP: If you want to run multiple samples, move them all to the same directory (or symlink them to save space), and design your input sheet to have different `project` ids. 
 
@@ -45,5 +48,12 @@ Quality Control:
     Fastqc
     Multiqc
 
-This is an example DAG for an analysis run with 6 samples.
+### This is an example DAG for an analysis run with 6 samples.
+
 ![Workflow DAG](/images/dag.svg)
+
+Solid lines indicate the rules that have not been executed yet, whereas dashed lines depict completed jobs at time of the dag generation.
+
+# Common FAQ
+- `list index out of range` Error: If you recieve an error that says `list index out of range` and the traceback points to `get_r1_fastq` or `get_r2_fastq` as the reason. More often than not the problem is in how the sample name is being given in the sample and subsample.tsv files. A common error is that the R1 or R2 extension is not recognized or it is being duplicated. When inputing the sample names, you do not need to include R1 or R2 in the name. Only include the file name up until the last . or _ before the paired read name. Recognized file endings are `_R1`, `.R1`, `.r1`, `_r1`, `_1` with the ending `fastq.gz` or `fq.gz`. If the error persists please feel free to submit an issue.
+- When making the input csv files, there shouldn't be any duplicates in the `sample` column of the sample.csv or else an error will be thrown by snakemake.

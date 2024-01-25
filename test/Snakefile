@@ -2,19 +2,50 @@ rule all:
     input:
         "Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.gff",
         "Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.fa",
-        "Mycolicibacterium_smegmatis/test_1.fastq.gz",
-        "Mycolicibacterium_smegmatis/test_2.fastq.gz",
+        "Mycolicibacterium_smegmatis/test1_1.fastq.gz",
+        "Mycolicibacterium_smegmatis/test1_2.fastq.gz",
+        "Mycolicibacterium_smegmatis/test2_1.fastq.gz",
+        "Mycolicibacterium_smegmatis/test2_2.fastq.gz",
+        "Mycolicibacterium_smegmatis/test3_1.fastq.gz",
+        "Mycolicibacterium_smegmatis/test3_2.fastq.gz",
+        "Mycolicibacterium_smegmatis/test4_1.fastq.gz",
+        "Mycolicibacterium_smegmatis/test4_2.fastq.gz",
+        "Mycolicibacterium_smegmatis/test5_1.fastq.gz",
+        "Mycolicibacterium_smegmatis/test5_2.fastq.gz",
+        "Mycolicibacterium_smegmatis/test6_1.fastq.gz",
+        "Mycolicibacterium_smegmatis/test6_2.fastq.gz",
         "/tmp/done.0"
 
 rule get_test_samples:
     input: 
     output:
-        r1="Mycolicibacterium_smegmatis/test_1.fastq.gz",
-        r2="Mycolicibacterium_smegmatis/test_2.fastq.gz"
+        r1="Mycolicibacterium_smegmatis/test1_1.fastq.gz",
+        r2="Mycolicibacterium_smegmatis/test1_2.fastq.gz",
+        r3="Mycolicibacterium_smegmatis/test2_1.fastq.gz",
+        r4="Mycolicibacterium_smegmatis/test2_2.fastq.gz",
+        r5="Mycolicibacterium_smegmatis/test3_1.fastq.gz",
+        r6="Mycolicibacterium_smegmatis/test3_2.fastq.gz",
+        r7="Mycolicibacterium_smegmatis/test4_1.fastq.gz",
+        r8="Mycolicibacterium_smegmatis/test4_2.fastq.gz",
+        r9="Mycolicibacterium_smegmatis/test5_1.fastq.gz",
+        r10="Mycolicibacterium_smegmatis/test5_2.fastq.gz",
+        r11="Mycolicibacterium_smegmatis/test6_1.fastq.gz",
+        r12="Mycolicibacterium_smegmatis/test6_2.fastq.gz"
+
     shell: 
         """
-        curl -L ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/049/SRR23849749/SRR23849749_1.fastq.gz -o {output.r1}
-        curl -L ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/049/SRR23849749/SRR23849749_2.fastq.gz -o {output.r2}
+        curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/032/SRR23849832/SRR23849832_1.fastq.gz -o {output.r1}
+        curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/032/SRR23849832/SRR23849832_2.fastq.gz -o {output.r2}
+        curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/031/SRR23849831/SRR23849831_1.fastq.gz -o {output.r3}
+        curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/031/SRR23849831/SRR23849831_2.fastq.gz -o {output.r4}
+        curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/017/SRR23849817/SRR23849817_1.fastq.gz -o {output.r5}
+        curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/017/SRR23849817/SRR23849817_2.fastq.gz -o {output.r6}
+        curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/015/SRR23849815/SRR23849815_1.fastq.gz -o {output.r7}
+        curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/015/SRR23849815/SRR23849815_2.fastq.gz -o {output.r8}
+        curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/014/SRR23849814/SRR23849814_1.fastq.gz -o {output.r9}
+        curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/014/SRR23849814/SRR23849814_2.fastq.gz -o {output.r10}
+        curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/013/SRR23849813/SRR23849813_1.fastq.gz -o {output.r11}
+        curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/013/SRR23849813/SRR23849813_2.fastq.gz -o {output.r12}
         """
 
 rule get_genome:
@@ -38,6 +69,5 @@ rule md5checksum:
     conda: "test.yml"
     shell: 
         """
-        pwd
-        cd Mycolicibacterium_smegmatis && rhash --check test.md5 && touch {output}
+        rhash --check Mycolicibacterium_smegmatis/test.md5 && touch {output}
         """

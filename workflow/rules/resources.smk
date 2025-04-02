@@ -1,15 +1,6 @@
 """ Add rules to this section that are related to resource tranfsormtion for use in workflow, 
 retrival, and mangement.
 """
-def get_gff(wildcards):
-    out = []
-    if config["quantification_tool"].lower() == "kalisto":
-        out.append(config["gff3"])
-    elif config["quantification_tool"].lower() == "star":
-        out.append(rules.convert_gff_to_gtf.output[0])
-    return out
-
-
 # Downloads the default necessary resources for checking for contamination 
 # with fastqscreen. Admittedly, not all of the genomes need/are to be used.
 rule download_fastq_screen_genomes:
@@ -21,6 +12,28 @@ rule download_fastq_screen_genomes:
         """
         fastq_screen --get_genomes
         mv {params.folder_name} {output}
+        """
+
+# Download given genome if needed
+rule download_genome:
+    output: "resources/download_genome/"
+    params:
+        url=config["genome"]["url"]
+    conda: "../envs/setup.yml"
+    shell:
+        """
+        wget -c --no-http-keep-alive {params.url} -O {output}
+        """
+
+# Download given gff3 if needed
+rule download_gff3:
+    output: "resources/download_gff3/"
+    params:
+        url=config["gff3"]["url"]
+    conda: "../envs/setup.yml"
+    shell:
+        """
+        wget -c --no-http-keep-alive {params.url} -O {output}
         """
 
 # Downlaod the default databases fro a gunc run on input reference
@@ -38,9 +51,9 @@ rule download_gunc_db:
 # Generate the transcriptome file.
 rule gffread:
     input:
-        gff3=config["gff3"],
-        ref=config["genome"]
-    output: "resources/"+config["genome_name"]+"/"+config["genome_name"]+".fa"
+        gff3=lambda wildcards: rules.symlink_gff3.output if config["gff3"]["is_local"] else rules.download_gff3.output,
+        ref=lambda wildcards: rules.symlink_genome.output if config["genome"]["is_local"] else rules.download_genome.output
+    output: "resources/"+config["genome"]["name"]+"/"+config["genome"]["name"]+".fa"
     conda: "../envs/resources.yml"
     shell:
         """
@@ -50,9 +63,9 @@ rule gffread:
 # Generate the Kallisto index
 rule kallisto_index:
     input: rules.gffread.output
-    output: "resources/"+config["genome_name"]+"/"+config["genome_name"]+".kallisto.index"
+    output: "resources/"+config["genome"]["name"]+"/"+config["genome"]["name"]+".kallisto.index"
     params:
-        name=config["genome_name"]
+        name=config["genome"]["name"]
     resources: mem=config["kallisto"]["mem"]
     conda: "../envs/quantification.yml"
     shell:
@@ -62,7 +75,7 @@ rule kallisto_index:
         """
 
 rule convert_gff_to_gtf:
-    input: config["gff3"]
+    input: lambda wildcards: rules.symlink_gff3.output if config["gff3"]["is_local"] else rules.download_gff3.output
     output: "resources/"+config["genome_name"]+"/star.gtf"
     conda: "../envs/resources.yml"
     shell:
@@ -73,7 +86,7 @@ rule convert_gff_to_gtf:
 # Generate the STAR index
 rule star_index:
     input: 
-        ref=config["genome"],
+        ref=lambda wildcards: rules.symlink_genome.output if config["genome"]["is_local"] else rules.download_genome.output,
         gff=rules.convert_gff_to_gtf.output
     output: directory("resources/star/")
     resources: mem=config["star"]["mem"]

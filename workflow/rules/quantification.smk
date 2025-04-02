@@ -59,7 +59,7 @@ rule star_reads_per_gene:
         outdir="results/{project}/quantification/star/star_reads_per_gene/{subsample}/",
         genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
         read_files=config["star"]["read_files"],
-        gff=config["gff3"],
+        gff=config["gff3"]["path"],
         bam_type=config["star"]["type"],
         other=config["star"]["other"]
     threads:config["star"]["threads"]
@@ -84,7 +84,7 @@ rule star_reads_per_transcript:
         outdir="results/{project}/quantification/star/star_reads_per_transcript/{subsample}/",
         genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
         read_files=config["star"]["read_files"],
-        gff=config["gff3"],
+        gff=config["gff3"]["path"],
         bam_type=config["star"]["type"],
         other=config["star"]["other"]
     threads:config["star"]["threads"]

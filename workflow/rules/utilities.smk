@@ -12,6 +12,24 @@ def get_r2_fastqs(wildcards):
     r2=[x for x in reads if ("_R2" in x or ".R2" in x or ".r2" in x or "_r2" in x or "_2.fq" in x or "_2.fastq" in x)]
     return r2[0]
 
+# Symlink reference genome
+rule symlink_genome:
+    input: config["genome"]["path"]
+    output: "resources/symlink_genome/"+config["genome"]["name"]+".fa"
+    shell:
+        """
+        ln -s {input} {output}
+        """
+
+# Symlink reference genome annotations in gff3 format
+rule symlink_gff3:
+    input: config["gff3"]["path"]
+    output: "resources/symlink_gff3/"+config["genome_name"]+".gff3"
+    shell:
+        """
+        ln -s {input} {output}
+        """
+
 
 # Create symlink that has the file renamed to specific ending
 rule symlink_files:

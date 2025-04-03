@@ -1,4 +1,14 @@
-MD5 (Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.fa) = ffa9ce44d8e755c989af0fb2409bf666
-MD5 (Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.gff) = 213438b40480aad251d83be0a2a3c81f
-MD5 (Mycolicibacterium_smegmatis/test_1.fastq.gz) = afa8a018fbdd722caaa3780475128c62
-MD5 (Mycolicibacterium_smegmatis/test_2.fastq.gz) = 520ae9eb088551850066b676eaec7ffe
+ffa9ce44d8e755c989af0fb2409bf666  ./Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.fa
+e81c5528b56b942182399dbf88069583  ./Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.gff
+10477f0ccc980ed4a631faa2e00670e3  ./Mycolicibacterium_smegmatis/test1_1.fastq.gz
+e6d6088b0e41a436a341d9453c3c7763  ./Mycolicibacterium_smegmatis/test1_2.fastq.gz
+5c5acf147ae5a1baa3e8a8582137cc36  ./Mycolicibacterium_smegmatis/test2_1.fastq.gz
+46d5055b757b4eb912cf5bb56cc5ba95  ./Mycolicibacterium_smegmatis/test2_2.fastq.gz
+14560cd1579bbe07ffd7818361a8a6fd  ./Mycolicibacterium_smegmatis/test3_1.fastq.gz
+c71c70896bca9640725ab9942362e024  ./Mycolicibacterium_smegmatis/test3_2.fastq.gz
+16686d78757a09f2f5e685df7c975216  ./Mycolicibacterium_smegmatis/test4_1.fastq.gz
+e01ad28930221da56b907b0403e3f6db  ./Mycolicibacterium_smegmatis/test4_2.fastq.gz
+0a40602a2dd41786a28cf51a2ea2ee3f  ./Mycolicibacterium_smegmatis/test5_1.fastq.gz
+387d7ff414db168e5ec01fe72dfc48fa  ./Mycolicibacterium_smegmatis/test5_2.fastq.gz
+ce9db6ec292ea9a373a2c9c659bb82f2  ./Mycolicibacterium_smegmatis/test6_1.fastq.gz
+fad3337f77ebb77c7fc63f55f88887bd  ./Mycolicibacterium_smegmatis/test6_2.fastq.gz

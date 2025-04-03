@@ -30,7 +30,7 @@ def get_multiqc_subsamples(wildcards):
 # This shoudl be run for both in house and genomes from sources like NCBI
 rule gunc_run:
     input:
-        ref=config["genome"],
+        ref=lambda wildcards: rules.symlink_genome.output if config["genome"]["is_local"] else rules.download_genome.output,
         db=rules.download_gunc_db.output.db
     output: "results/{project}/reports/gunc_run/diamond_output/{project}.diamond.progenomes_2.1.out"
     log: "logs/{project}/reports/gunc_run/{project}_run.log"
@@ -48,7 +48,7 @@ rule gunc_run:
 # Plot Gunc output from run
 rule gunc_plot:
     input: 
-        ref=config["genome"],
+        ref=lambda wildcards: rules.symlink_genome.output if config["genome"]["is_local"] else rules.download_genome.output,
         diamond=rules.gunc_run.output
     output:directory("results/{project}/reports/gunc_plot/")
     log: "logs/{project}/reports/gunc_plot/gunc_plot.log"

@@ -2,7 +2,17 @@
     "pepfile":"config/pepconfig.yml",
     "genome":"test/Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.fa", 
     "genome_name":"Mycolicibacterium_smegmatis",
-    "gff3":"test/Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.gff",
+    "genome":{
+	    "is_local":true,
+	    "name":"Mycolicibacterium_smegmatis",
+	    "path":"test/Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.fa",
+	    "url":""
+    },
+    "gff3":{
+	    "is_local":true,
+	    "path":"test/Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.gff",
+	    "url":""
+    },
     "metadata":"test/Mycolicibacterium_smegmatis/deseq_metadata.csv",
     "run_gunc":"true",
     "quantification_tool":"star"

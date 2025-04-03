@@ -1,4 +1,6 @@
 # RNASeq Quantification Workflow
+This workflow is meant for use originally for isolates with STAR using a transcriptome; however additions have made it now possible to use Kallisto. If running on a MAG sample you may wish to take an alignmnet approach instead of using this method (especially if the annotation set is limited). In the case of an limited annotation set, you may wish to annotate using [anvi'o](https://anvio.org/) which provides a much more extensive annotation set then other tools tested (as of April, 2025) prior to using this workflow. 
+
 ### Installation and Environment Set Up
 This workflow expects that you have [conda](https://docs.conda.io/en/latest/miniconda.html) installed prior to starting. Conda is very easy to install in general and will allow you to easily install the other dependencies needed in this workflow. then you will need to download this repository via git clone.
 

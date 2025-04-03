@@ -25,7 +25,8 @@ In this pipeline we are using PEP which allows for easier portability between pr
 `protocol`: Put `rna` here.
 `seq_method`: Put `paired_end` here
 4. Edit the config/pepconfig.yml to contain the full path to the subsample.csv and the sample.csv on lines `sample_table:` and `subsample_table:`
-5. Download your genome and gff3. Make sure it is the genome and not the transcriptome or the gffread step will fail. Also make sure the gff3 is the annotation associated with the genome you have provided. You'll need to then edit the config/config.json file's lines:
+5. You can select to download your genome and gff3 via a url or to download it manually before hand and set the path. Make sure it is the genome and not the transcriptome or the gffread step will fail. Also make sure the gff3 is the annotation associated with the genome you have provided. You'll need to then edit the config/config.json file's lines:
+`is_local`: to be True or False depending on if you wish for it to download from a provided url in the config or from the provided path.
 `genome`: To be the path to where your genome.fa is.
 `genome_name`: To be the exact name of your genome including the fasta.
 `gff3`: To be the path where the gff3 file is location.

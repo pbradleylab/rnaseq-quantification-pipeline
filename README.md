@@ -1,59 +1,185 @@
-# RNASeq Quantification Workflow
-### Installation and Environment Set Up
-This workflow expects that you have [conda](https://docs.conda.io/en/latest/miniconda.html) installed prior to starting. Conda is very easy to install in general and will allow you to easily install the other dependencies needed in this workflow. then you will need to download this repository via git clone.
+# RNA-seq Quantification Workflow
 
-1. Activate your conda environment so that you are in the "base" environment. This can be achieved by running a source /path/to/conda/install/folder/bin/activate
-2. Make sure you have your channels set up to allow conda-forge by running `conda config --add channels conda-forge`
-3. Install snakemake into a new environment by running `conda create -n rnaquant -c bioconda snakemake=7.25.4`. Then activate it by running `conda activate rnaquant`.
-4. Move into the directory `cd rnaseq-quantification-pipeline` and if desired generate the test data by running `cd test && snakemake --use-conda --cores 4 -j`. The md5sum may say the files are not downloaded on the first go; however, if you run it again the files should all be OK. Move back to the rnaseq-quantification-pipeline folder after this is done, then run `snakemake --use-conda --cores 2 -n` to test if everything is installed correctly. If not, then you'll need to trouble shoot your environment. The
+This Snakemake workflow processes bulk RNA-seq data from FASTQ files through
+trimming, QC, quantification, MultiQC reporting, and basic DESeq2 differential
+expression outputs. It supports mixed paired-end and single-end projects.
 
-That's it! If you have downloaded snakemake, the rest of the dependencies will be downloaded automatically for you via the workflow.
+## Main Outputs
 
-### Prepare the input files
-In this pipeline we are using PEP which allows for easier portability between projects. You need to alter some of the files and generate two `.tsv`.
+For each project, the workflow writes final outputs under `results/{project}/`.
 
-1. Edit the config/pepconfig.yml file's `raw_data:` string to be where your files are located at. Make sure to use the full path to avoid any errors.
-2. We need to generate the samples and subsamples files. subsamples is just where the paired end files are input, samples is an overview file. Each row contains a different sample and it's related information. First create your sample sheet and make sure it ends with `.csv`. 
-`sample_name`: The name of the sample without the ending. If it can't match it then you'll get an error.
-`alternate_id`: Really doesn't matter, but if there is a different ID that the sample is under add it here. Otherwise, just set this as 1,2,3,4 etc.
-`project`: The name of the project you are working on
-`organism`: The organism / strain
-`sample_type`: Put `rna` here.
-3. Create a subsample sheet fill out the following.
-`sample_name`: The name of the sample as supplied in the sample file above.
-`subsample`: The same name of the sample_name. This is needed if it is paired end as there are technically two files to process.
-`protocol`: Put `rna` here.
-`seq_method`: Put `paired_end` here
-4. Edit the config/pepconfig.yml to contain the full path to the subsample.csv and the sample.csv on lines `sample_table:` and `subsample_table:`
-5. Download your genome and gff3. Make sure it is the genome and not the transcriptome or the gffread step will fail. Also make sure the gff3 is the annotation associated with the genome you have provided. You'll need to then edit the config/config.json file's lines:
-`genome`: To be the path to where your genome.fa is.
-`genome_name`: To be the exact name of your genome including the fasta.
-`gff3`: To be the path where the gff3 file is location.
-`run_gunc`: Put either "true" of flase, to choose to run GUNC on the reference genome being used.
-`quantification_tool`: Put either "kallisto" or "star" to choose which quantification method you  with to use.
+- `final/multiqc/multiqc_report.html`: combined QC report.
+- `final/qc/{project}_sample_qc_summary.tsv`: per-sample QC summary table.
+- `final/quantification/star/gene_counts_all_samples.tsv`: STAR gene-count matrix when `quantification_tool` is `star`.
+- `final/quantification/kallisto/transcript_counts_all_samples.tsv`: Kallisto count matrix when `quantification_tool` is `kallisto`.
+- `final/quantification/kallisto/transcript_tpms_all_samples.tsv`: Kallisto TPM matrix.
+- `differential_expression/{project}.tsv`: DESeq2 results table.
+- `differential_expression/{project}.png`, `.svg`, `.pdf`: volcano plot.
+- `differential_expression/{project}_normalized_expression_boxplot.*`: normalized expression boxplot in PNG, SVG, and PDF.
+- `differential_expression/{project}_normalized_expression_density.*`: normalized expression density plot in PNG, SVG, and PDF.
 
-### Run The Workflow
-You should be good to go. Resources are automatically downloaded for tools that need them in the `resouces/` folder. This may take an hour or so after running. At the ened you will get two combined matrices of counts and TPM from the quantification.
-1. To run the workflow enter `snakemake --use-conda -j --cores 4` in the `rnaseq-quantification-pipeline` directory. Make sure you are *not* trying to run the quantification pipeline in the `test` or `workflow` directories. If the workflow is failing at a certain point, you can still generate some of the data *likely by running it with the `-k` flag as well.
-NOTE:: You can also run the workflow on slurm by using `snakemake --slurm --default-resources slurm_account=osc_account_number -j --use-conda`.
+## Installation
 
-TIP: If you want to run multiple samples, move them all to the same directory (or symlink them to save space), and design your input sheet to have different `project` ids. 
+Install conda or mamba first. Then create an environment with Snakemake:
 
+```bash
+conda create -n snakemake -c conda-forge -c bioconda snakemake
+conda activate snakemake
+```
 
-We are running the following programs, and are welcome to PR and input on other programs we should be running. 
-Trimming: Trim-galore
-Quanitifcation: Kallisto
-Quality Control: 
-    Fastq-screen
-    Fastqc
-    Multiqc
+The workflow-specific tool environments are defined in `workflow/envs/` and are
+created automatically when running Snakemake with `--use-conda`.
 
-### This is an example DAG for an analysis run with 6 samples.
+## Test Data
 
-![Workflow DAG](/images/dag.svg)
+The repository includes a small test reference and test sample sheets. To check
+that the workflow DAG builds:
 
-Solid lines indicate the rules that have not been executed yet, whereas dashed lines depict completed jobs at time of the dag generation.
+```bash
+conda activate snakemake
+snakemake --use-conda --cores 1 -n
+```
 
-# Common FAQ
-- `list index out of range` Error: If you recieve an error that says `list index out of range` and the traceback points to `get_r1_fastq` or `get_r2_fastq` as the reason. More often than not the problem is in how the sample name is being given in the sample and subsample.tsv files. A common error is that the R1 or R2 extension is not recognized or it is being duplicated. When inputing the sample names, you do not need to include R1 or R2 in the name. Only include the file name up until the last . or _ before the paired read name. Recognized file endings are `_R1`, `.R1`, `.r1`, `_r1`, `_1` with the ending `fastq.gz` or `fq.gz`. If the error persists please feel free to submit an issue.
-- When making the input csv files, there shouldn't be any duplicates in the `sample` column of the sample.csv or else an error will be thrown by snakemake.
+The test FASTQs can be generated from the `test/` directory:
+
+```bash
+cd test
+snakemake --use-conda --cores 4
+cd ..
+```
+
+## Input Configuration
+
+The main configuration files are:
+
+- `config/config.json`: project-level settings, reference paths, metadata, and quantification choice.
+- `config/tools.json`: tool resource settings and analysis parameters.
+- `config/pepconfig.yml`: PEP sample table configuration.
+- `test/test_samples.csv` and `test/test_subsamples.csv`: example sample sheets.
+
+### Sample Table
+
+The sample table must include:
+
+- `sample_name`: sample identifier. This must match the sample IDs in metadata and the subsample table.
+- `alternate_id`: optional alternate identifier.
+- `project`: project name used in output paths.
+- `organism`: organism or strain.
+- `sample_type`: use `rna`.
+- `seq_method`: `paired_end` or `single_end`.
+
+### Subsample Table
+
+The subsample table must include:
+
+- `sample_name`: sample identifier from the sample table.
+- `subsample`: subsample identifier used to discover FASTQ files.
+- `protocol`: use `rna`.
+- `seq_method`: `paired_end` or `single_end`.
+
+FASTQ discovery is configured in `config/pepconfig.yml`. By default, reads are
+derived from:
+
+```yaml
+sample_modifiers:
+  append:
+    raw_data: "test/Mycolicibacterium_smegmatis/"
+  derive:
+    attributes: [reads]
+    sources:
+      rna: "{raw_data}/{subsample}*.fastq.gz"
+```
+
+For paired-end data, read names should contain a recognizable R1/R2 marker such
+as `_R1`, `_R2`, `.R1`, `.R2`, `_1.fastq`, or `_2.fastq`.
+
+### Reference Configuration
+
+In `config/config.json`, set:
+
+- `genome.is_local`: `true` when using a local FASTA.
+- `genome.name`: stable reference name used in output paths.
+- `genome.path`: local FASTA path when `is_local` is `true`.
+- `genome.url`: remote FASTA URL when `is_local` is `false`.
+- `gff3.is_local`: `true` when using a local annotation file.
+- `gff3.path`: local GFF/GTF path when `is_local` is `true`.
+- `gff3.url`: remote annotation URL when `is_local` is `false`.
+- `metadata`: DESeq2 metadata CSV.
+- `run_gunc`: `"true"` or `"false"`.
+- `quantification_tool`: `"star"` or `"kallisto"`.
+
+## Tool Configuration
+
+Thread and memory settings are in `config/tools.json`.
+
+Important STAR options:
+
+- `star.read_files`: command used by STAR to read compressed FASTQ files, for example `gunzip -c`.
+- `star.type`: STAR BAM output type, for example `BAM Unsorted`.
+- `star.gene_counts_strandedness`: count column used from `ReadsPerGene.out.tab`.
+  - `unstranded`: STAR column 2.
+  - `forward`: STAR column 3.
+  - `reverse`: STAR column 4.
+- `star.other`: extra STAR arguments.
+
+DESeq2 options:
+
+- `deseq2.variable_to_analyze`: metadata column used in the design formula.
+- `deseq2.reference_in_variable`: reference level for that metadata column.
+- `deseq2.log2fc_threshold`: volcano plot fold-change threshold.
+- `deseq2.padj_threshold`: adjusted p-value threshold.
+- `deseq2.label_top_n`: number of top genes to label on the volcano plot.
+
+## Running The Workflow
+
+From the repository root:
+
+```bash
+conda activate snakemake
+snakemake --use-conda --cores 4
+```
+
+For a dry run:
+
+```bash
+snakemake --use-conda --cores 1 -n
+```
+
+On SLURM with Snakemake's executor support, adapt this pattern to your cluster:
+
+```bash
+snakemake --use-conda --slurm --default-resources slurm_account=YOUR_ACCOUNT --jobs 50
+```
+
+## QC And Reports
+
+The workflow runs:
+
+- Trim Galore for read trimming.
+- FastQC on raw and trimmed reads.
+- FastQ Screen for contamination screening.
+- STAR or Kallisto for quantification.
+- GUNC on the reference genome when enabled.
+- MultiQC for combined reporting.
+- DESeq2 for differential expression and plots.
+
+The per-sample QC summary combines key metadata, FastQC status, FastQ Screen
+report presence, assigned counts, and STAR mapping metrics when STAR is used.
+
+## Common Problems
+
+- **Metadata/count mismatch in DESeq2**: sample IDs in the metadata must match
+  count-matrix columns exactly. The workflow now stops with a clear error when
+  they do not match.
+- **Paired-end FASTQs not found**: check R1/R2 naming. The workflow recognizes
+  common endings such as `_R1`, `_R2`, `_1.fastq`, and `_2.fastq`.
+- **Wrong STAR count column**: set `star.gene_counts_strandedness` to
+  `unstranded`, `forward`, or `reverse` to match the library strandedness.
+- **Run location**: run the main workflow from the repository root, not from
+  `test/` or `workflow/`.
+
+## DAG
+
+An example workflow DAG is available at:
+
+![Workflow DAG](images/dag.svg)

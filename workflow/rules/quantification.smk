@@ -231,7 +231,9 @@ rule merge_star_counts:
         "../envs/quantification.yml"
     resources:
         mem_mb=config["star"]["mem"],
+    params:
+        strandedness=config["star"].get("gene_counts_strandedness", "unstranded"),
     shell:
         """
-        python workflow/scripts/combine_star_counts.py --output {output} {input} 2> {log}
+        python workflow/scripts/combine_star_counts.py --output {output} --strandedness {params.strandedness} {input} 2> {log}
         """

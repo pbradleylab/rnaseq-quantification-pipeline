@@ -55,8 +55,8 @@ dir.create(dirname(opt$expression_density_svg_path), recursive=TRUE, showWarning
 dir.create(dirname(opt$expression_density_pdf_path), recursive=TRUE, showWarnings=FALSE)
 
 #Assign a variable to both files
-count_data = read.csv(opt$counts_data, header = TRUE, sep = "\t")
-metadata=read.csv(opt$metadata_file, header = TRUE)
+count_data = read.csv(opt$counts_data, header = TRUE, sep = "\t", check.names = FALSE)
+metadata=read.csv(opt$metadata_file, header = TRUE, check.names = FALSE)
 fm = as.formula(paste0("~", opt$variable_to_analyze))
 
 #We need to first change the first column into the row names with the following command
@@ -82,10 +82,19 @@ stop("Metadata must include a sample_name or sample column.")
 metadata = metadata %>% remove_rownames %>% column_to_rownames(var = sample_id_col)
 
 
-#Now we verify if the names from the data and metadata matches (both must come TRUE)
-all(rownames(metadata) %in% colnames(count_data_mtx))
-
-all(rownames(metadata) == colnames(count_data_mtx))
+missing_counts = setdiff(rownames(metadata), colnames(count_data_mtx))
+extra_counts = setdiff(colnames(count_data_mtx), rownames(metadata))
+if (length(missing_counts) > 0 || length(extra_counts) > 0) {
+stop(
+    paste(
+        "Count matrix columns and metadata samples do not match.",
+        paste("Missing count columns:", paste(missing_counts, collapse=", ")),
+        paste("Count columns without metadata:", paste(extra_counts, collapse=", ")),
+        sep="\n"
+    )
+)
+}
+count_data_mtx = count_data_mtx[, rownames(metadata), drop=FALSE]
 
 #now we can run the DESeq with our matrix MAKE SURE TO CHANGE THE DESIGN TO THE NAME OF THE SECOND COLUMN FROM THE METADATA)
 dds = DESeqDataSetFromMatrix(countData = count_data_mtx, colData = metadata, design = fm)
@@ -105,7 +114,13 @@ res = results(dds)
 res[order(res$padj),]
 
 #finally you can import the data
-write.csv(as.data.frame(res[order(res$padj),]), file = opt$output_file)
+write.table(
+    as.data.frame(res[order(res$padj),]),
+    file=opt$output_file,
+    sep="\t",
+    quote=FALSE,
+    col.names=NA
+)
 }
 
 save_plot = function(plot, png_path, svg_path, pdf_path, width=7, height=5) {

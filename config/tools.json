@@ -9,6 +9,7 @@
         "read_files": "gunzip -c",
         "type": "BAM Unsorted",
         "quant_mode": "TranscriptomeSAM",
+        "gene_counts_strandedness": "unstranded",
         "other": ""
     },
     "fastq_screen": {

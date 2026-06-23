@@ -1,16 +1,26 @@
 """ Add rules to this section that are general utility functions or specific utilities.
 """
-def get_r1_fastqs(wildcards):
-    out = {} # Dictionary that will hold two reads with r1 in index 0 and r2 in index 1
+def get_fastqs(wildcards):
+    out = {"r1": [], "r2": [], "single": []}
     reads = get_subsample_attributes(wildcards.subsample, "reads", pep)
-    r1=[x for x in reads if ("_R1" in x or ".R1" in x or ".r1" in x or "_r1" in x or "_1.fq" in x or "_1.fastq" in x)]
-    return r1[0]
+    if isinstance(reads, str):
+        reads = [reads]
 
-def get_r2_fastqs(wildcards):
-    out = {} # Dictionary that will hold two reads with r1 in index 0 and r2 in index 1
-    reads = get_subsample_attributes(wildcards.subsample, "reads", pep)
-    r2=[x for x in reads if ("_R2" in x or ".R2" in x or ".r2" in x or "_r2" in x or "_2.fq" in x or "_2.fastq" in x)]
-    return r2[0]
+    seq_method = get_subsample_attributes(wildcards.subsample, "seq_method", pep)
+    if isinstance(seq_method, list):
+        seq_method = seq_method[0]
+
+    for read in reads:
+        if seq_method == "paired_end":
+            if any(x in read for x in ["_R1", ".R1", ".r1", "_r1", "_1.fq", "_1.fastq"]):
+                out["r1"].append(read)
+            elif any(x in read for x in ["_R2", ".R2", ".r2", "_r2", "_2.fq", "_2.fastq"]):
+                out["r2"].append(read)
+        elif seq_method == "single_end":
+            out["single"].append(read)
+
+    return out
+
 
 # Symlink reference genome
 rule symlink_genome:
@@ -30,20 +40,33 @@ rule symlink_gff3:
         ln -s {input} {output}
         """
 
-
 # Create symlink that has the file renamed to specific ending
 rule symlink_files:
-    input: 
-        read1=get_r1_fastqs,
-        read2=get_r2_fastqs
-    output: 
+    input:
+        read1=lambda wildcards: get_fastqs(wildcards).get("r1", None),
+        read2=lambda wildcards: get_fastqs(wildcards).get("r2", None)
+    output:
         read1="resources/{project}/raw/{subsample}_R1.fastq.gz",
         read2="resources/{project}/raw/{subsample}_R2.fastq.gz"
     params:
         outdir="resources/{project}/raw/"
-    resources:mem_mb=1024
+    resources:
+        mem_mb=1024
+    run:
+        if input.read1 and input.read2:
+            # Create symlinks for paired-end reads if they exist
+            shell("ln -s {input.read1} {output.read1}")
+            shell("ln -s {input.read2} {output.read2}")
+        else:
+            # If paired-end reads are missing, raise an error to skip the rule
+            raise ValueError(f"Skipping symlink_files: Paired-end reads not found for {wildcards.subsample}.")
+
+rule symlink_files_single:
+    input: lambda wildcards: get_fastqs(wildcards)["single"],
+    output: "resources/{project}/raw/{subsample}.fastq.gz",
+    params:
+        outdir="resources/{project}/raw/"
     shell:
         """
-        ln -s {input.read1} {output.read1}
-        ln -s {input.read2} {output.read2}
+        ln -s {input} {output}
         """

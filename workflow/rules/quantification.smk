@@ -69,7 +69,7 @@ rule star_reads_per_gene:
         """
         STAR --runThreadN {threads} --genomeDir {input.index} --readFilesIn {input.reads} \
                 --readFilesCommand {params.read_files} --outSAMtype {params.bam_type} \
-                --quantMode GeneCounts --outFileNamePrefix {params.outdir} %> {log} \
+                --quantMode GeneCounts --outFileNamePrefix {params.outdir} 2> {log} \
                 {params.other}
         """
 
@@ -94,6 +94,6 @@ rule star_reads_per_transcript:
         """
         STAR --runThreadN {threads} --genomeDir {input.index} --readFilesIn {input.reads} \
                 --readFilesCommand {params.read_files} --outSAMtype {params.bam_type} \
-                --quantMode TranscriptomeSAM --outFileNamePrefix {params.outdir} %> {log} \
+                --quantMode TranscriptomeSAM --outFileNamePrefix {params.outdir} 2> {log} \
                 {params.other}
         """

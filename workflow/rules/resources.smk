@@ -19,7 +19,7 @@ rule download_genome:
     output: "resources/download_genome/"
     params:
         url=config["genome"]["url"]
-    conda: "../envs/setup.yml"
+    conda: "../envs/resources.yml"
     shell:
         """
         wget -c --no-http-keep-alive {params.url} -O {output}
@@ -30,7 +30,7 @@ rule download_gff3:
     output: "resources/download_gff3/"
     params:
         url=config["gff3"]["url"]
-    conda: "../envs/setup.yml"
+    conda: "../envs/resources.yml"
     shell:
         """
         wget -c --no-http-keep-alive {params.url} -O {output}

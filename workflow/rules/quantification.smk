@@ -1,29 +1,5 @@
 """ Add rules to this section that are related to quantification.
 """
-def get_h5(wildcards):
-    out = []
-    for subsample in pep.subsample_table.subsample.tolist():
-        project = get_subsample_attributes(subsample, "project", pep)
-        seq_method = get_seq_method(subsample)
-        if seq_method == "paired_end":
-            out.append(rules.kallisto.output[0].format(project=project, subsample=subsample))
-        elif seq_method == "single_end":
-            out.append(rules.kallisto_single.output[0].format(project=project, subsample=subsample))
-    return out
-
-def get_star_gene_counts(wildcards):
-    out = []
-    for subsample in pep.subsample_table.subsample.tolist():
-        project = get_subsample_attributes(subsample, "project", pep)
-        if project != wildcards.project:
-            continue
-        seq_method = get_seq_method(subsample)
-        if seq_method == "paired_end":
-            out.append(rules.star_reads_per_gene.output[0].format(project=project, subsample=subsample))
-        elif seq_method == "single_end":
-            out.append(rules.star_reads_per_gene_single.output[0].format(project=project, subsample=subsample))
-    return out
-
 # kallisto is a program for quantifying abundances of transcripts from bulk 
 # and single-cell RNA-Seq data, or more generally of target sequences using 
 # high-throughput sequencing reads.
@@ -71,20 +47,22 @@ rule kallisto_single:
         """
         
 rule merge_kallisto:
-    input: get_h5
+    input: lambda wildcards: get_kallisto_h5(wildcards, pep, rules)
     output:
         tpm="results/{project}/final/quantification/kallisto/transcript_tpms_all_samples.tsv",
         counts="results/{project}/final/quantification/kallisto/transcript_counts_all_samples.tsv"
     params:
-        outdir="results/{project}/quantification/kallisto/",
+        outdirs=lambda wildcards: [
+            f"results/{wildcards.project}/quantification/kallisto/",
+            f"results/{wildcards.project}/quantification/kallisto_single/",
+        ],
         project="{project}"
     resources: mem_mb=config["kallisto"]["mem"]
     log: "logs/{project}/quantification/kallisto/merge.log"
     conda: "../envs/quantification.yml"
     shell:
         """
-        bash workflow/scripts/combine_count.sh {params.project} {params.outdir} {output.tpm} 2> {log}
-        bash workflow/scripts/combine_tpm.sh {params.project} {params.outdir} {output.counts} 2>> {log}
+        python workflow/scripts/combine_kallisto.py --counts {output.counts} --tpm {output.tpm} {params.outdirs} 2> {log}
         """
 
 rule star_reads_per_gene:
@@ -196,7 +174,7 @@ rule star_reads_per_transcript_single:
         """
 
 rule merge_star_counts:
-    input: get_star_gene_counts
+    input: lambda wildcards: get_star_gene_counts(wildcards, pep, rules)
     output: "results/{project}/final/quantification/star/gene_counts_all_samples.tsv"
     resources: mem_mb=config["star"]["mem"]
     log: "logs/{project}/quantification/star/merge_counts.log"

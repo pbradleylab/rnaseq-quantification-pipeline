@@ -12,7 +12,7 @@ def get_multiqc_subsamples(wildcards):
     metricsLST = []
     for subsample in pep.subsample_table.subsample.tolist():
         project = get_subsample_attributes(subsample, "project", pep)
-        seq_method = get_seq_method(subsample)
+        seq_method = get_seq_method(subsample, pep)
         # Always run rules on the outside
         if seq_method == "paired_end":
             metricsLST.append(rules.fastqc.output[0].format(project=project, subsample=subsample))

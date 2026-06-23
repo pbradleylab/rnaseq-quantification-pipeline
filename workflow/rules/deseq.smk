@@ -10,7 +10,7 @@ def get_quant_method(wildcards):
 
 
 rule deseq2:
-    input: 
+    input:
         counts=get_quant_method,
         metadata=config["metadata"],
         multiqc=rules.multiqc.output

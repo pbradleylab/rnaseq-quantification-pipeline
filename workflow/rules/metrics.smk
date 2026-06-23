@@ -2,6 +2,9 @@
 """
 configfile: "config/config.json"
 
+ruleorder: fastqc > fastqc_single
+ruleorder: fastq_screen > fastq_screen_single
+
 def get_fastq_input(wildcards):
     return get_subsample_attributes(wildcards.subsample, "reads", pep)
 
@@ -9,14 +12,23 @@ def get_multiqc_subsamples(wildcards):
     metricsLST = []
     for subsample in pep.subsample_table.subsample.tolist():
         project = get_subsample_attributes(subsample, "project", pep)
+        seq_method = get_seq_method(subsample)
         # Always run rules on the outside
-        metricsLST.append(rules.fastqc.output[0].format(project=project, subsample=subsample))
-        metricsLST.append(rules.fastq_screen.output[0].format(project=project, subsample=subsample))
+        if seq_method == "paired_end":
+            metricsLST.append(rules.fastqc.output[0].format(project=project, subsample=subsample))
+            metricsLST.append(rules.fastq_screen.output[0].format(project=project, subsample=subsample))
+        elif seq_method == "single_end":
+            metricsLST.append(rules.fastqc_single.output[0].format(project=project, subsample=subsample))
+            metricsLST.append(rules.fastq_screen_single.output[0].format(project=project, subsample=subsample))
         if config["quantification_tool"].lower() == "kallisto":
             metricsLST.append(rules.merge_kallisto.output[0].format(project=project))
         elif config["quantification_tool"].lower() == "star":
-            metricsLST.append(rules.star_reads_per_gene.output[0].format(project=project, subsample=subsample))
-            metricsLST.append(rules.star_reads_per_transcript.output[0].format(project=project, subsample=subsample))
+            if seq_method == "paired_end":
+                metricsLST.append(rules.star_reads_per_gene.output[0].format(project=project, subsample=subsample))
+                metricsLST.append(rules.star_reads_per_transcript.output[0].format(project=project, subsample=subsample))
+            elif seq_method == "single_end":
+                metricsLST.append(rules.star_reads_per_gene_single.output[0].format(project=project, subsample=subsample))
+                metricsLST.append(rules.star_reads_per_transcript_single.output[0].format(project=project, subsample=subsample))
         if config["run_gunc"].lower() == "true":
             metricsLST.append(rules.gunc_plot.output[0].format(project=project, subsample=subsample))
 
@@ -36,7 +48,7 @@ rule gunc_run:
     threads: config["gunc"]["threads"]
     resources: mem_mb = config["gunc"]["mem"]
     conda: "../envs/metrics.yml"
-    shell: 
+    shell:
         """
         mkdir -p {params.out_dir}
         gunc run --threads {threads} --temp_dir /tmp/ -i {input.ref} --db_file {input.db} --out_dir {params.out_dir} 2> {log}
@@ -75,9 +87,29 @@ rule fastq_screen:
     threads: config["fastq_screen"]["threads"]
     resources: mem_mb = config["fastq_screen"]["mem"]
     conda: "../envs/metrics.yml"
-    shell: 
+    shell:
         """
         fastq_screen --outdir {params.outdir} --force --aligner {params.aligner} --conf {params.fastq_screen_config} --subset {params.subset} --threads {threads} {input.read1} {input.read2} 2> {log}
+        """
+
+rule fastq_screen_single:
+    input:
+        refs=rules.download_fastq_screen_genomes.output,
+        read1=rules.symlink_files_single.output
+    output:"results/{project}/reports/fastq_screen/{subsample}/{subsample}_screen.html"
+    params:
+        fastq_screen_config="config/fastq_screen_config.conf",
+        subset=config["fastq_screen"]["subset"],
+        aligner=config["fastq_screen"]["aligner"],
+        outdir="results/{project}/reports/fastq_screen/{subsample}/",
+        subsample="{subsample}"
+    log: "logs/{project}/reports/fastq_screen/{subsample}.log"
+    threads: config["fastq_screen"]["threads"]
+    resources: mem_mb = config["fastq_screen"]["mem"]
+    conda: "../envs/metrics.yml"
+    shell:
+        """
+        fastq_screen --outdir {params.outdir} --force --aligner {params.aligner} --conf {params.fastq_screen_config} --subset {params.subset} --threads {threads} {input.read1} 2> {log}
         """
 
 # FastQC is a quality control application for high throughput sequence data. 
@@ -97,12 +129,28 @@ rule fastqc:
     threads: config["fastqc"]["threads"]
     resources: mem_mb = config["fastqc"]["mem"]
     conda: "../envs/metrics.yml"
-    shell: 
+    shell:
         """
         mkdir -p {params.outdir}
         fastqc {input.read1} {input.read2} --extract -t {threads} -o {params.outdir} 2> {log}
         """
 
+rule fastqc_single:
+    input:
+        read1=rules.symlink_files_single.output
+    output: "results/{project}/reports/fastqc/{subsample}_fastqc.zip"
+    log: "logs/{project}/reports/fastqc/{subsample}.log"
+    params:
+        outdir="results/{project}/reports/fastqc/",
+        subsample="{subsample}"
+    threads: config["fastqc"]["threads"]
+    resources: mem_mb = config["fastqc"]["mem"]
+    conda: "../envs/metrics.yml"
+    shell:
+        """
+        mkdir -p {params.outdir}
+        fastqc {input.read1} --extract -t {threads} -o {params.outdir} 2> {log}
+        """
 
 # Generates html reports of analysis / QC done using MultiQC
 # as shown here: https:/multiqc.info/

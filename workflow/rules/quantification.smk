@@ -4,7 +4,11 @@ def get_h5(wildcards):
     out = []
     for subsample in pep.subsample_table.subsample.tolist():
         project = get_subsample_attributes(subsample, "project", pep)
-        out.append(rules.kallisto.output[0].format(project=project, subsample=subsample))
+        seq_method = get_seq_method(subsample)
+        if seq_method == "paired_end":
+            out.append(rules.kallisto.output[0].format(project=project, subsample=subsample))
+        elif seq_method == "single_end":
+            out.append(rules.kallisto_single.output[0].format(project=project, subsample=subsample))
     return out
 
 # kallisto is a program for quantifying abundances of transcripts from bulk 
@@ -28,6 +32,30 @@ rule kallisto:
         """
         kallisto quant -t {threads} -i {input.index} -o {params.outdir} {input.reads}
         """
+
+rule kallisto_single:
+    input:
+        reads=rules.trim_galore_single.output,
+        transcriptome=rules.gffread.output,
+        index=rules.kallisto_index.output
+    output:
+        "results/{project}/quantification/kallisto_single/{subsample}/abundance.h5"
+    log:
+        "logs/{project}/quantification/kallisto_single/{subsample}.log"
+    params:
+        outdir="results/{project}/quantification/kallisto_single/{subsample}/",
+        genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
+        frag_len=200,  # Set fragment length estimate
+        frag_sd=20     # Set fragment length standard deviation
+    threads: config["kallisto"]["threads"]
+    resources:
+        mem=config["kallisto"]["mem"]
+    conda: "../envs/quantification.yml"
+    shell:
+        """
+        kallisto quant -t {threads} -i {input.index} -o {params.outdir} --single \
+        -l {params.frag_len} -s {params.frag_sd} {input.reads} 2> {log}
+        """
         
 rule merge_kallisto:
     input: get_h5
@@ -38,11 +66,12 @@ rule merge_kallisto:
         outdir="results/{project}/quantification/kallisto/",
         project="{project}"
     resources: mem=config["kallisto"]["mem"]
+    log: "logs/{project}/quantification/kallisto/merge.log"
     conda: "../envs/quantification.yml"
     shell:
         """
-        bash workflow/scripts/combine_count.sh {params.project} {params.outdir} {output.tpm}
-        bash workflow/scripts/combine_tpm.sh {params.project} {params.outdir} {output.counts}
+        bash workflow/scripts/combine_count.sh {params.project} {params.outdir} {output.tpm} 2> {log}
+        bash workflow/scripts/combine_tpm.sh {params.project} {params.outdir} {output.counts} 2>> {log}
         """
 
 rule star_reads_per_gene:
@@ -56,7 +85,7 @@ rule star_reads_per_gene:
         outdir="results/{project}/quantification/star/star_reads_per_gene/{subsample}/",
         genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
         read_files=config["star"]["read_files"],
-        gff=config["gff3"]["path"],
+        gff=lambda wildcards: rules.symlink_gff3.output if config["gff3"]["is_local"] else rules.download_gff3.output,
         bam_type=config["star"]["type"],
         other=config["star"]["other"]
     threads:config["star"]["threads"]
@@ -70,6 +99,35 @@ rule star_reads_per_gene:
                 {params.other}
         """
 
+rule star_reads_per_gene_single:
+    input:
+        reads=rules.trim_galore_single.output,
+        transcriptome=rules.gffread.output,
+        index=rules.star_index.output
+    output:
+        "results/{project}/quantification/star/star_reads_per_gene_single/{subsample}/ReadsPerGene.out.tab"
+    log:
+        "logs/{project}/quantification/star_gene_single/{subsample}.log"
+    params:
+        outdir="results/{project}/quantification/star/star_reads_per_gene_single/{subsample}/",
+        genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
+        read_files=config["star"]["read_files"],
+        gff=lambda wildcards: rules.symlink_gff3.output if config["gff3"]["is_local"] else rules.download_gff3.output,
+        bam_type=config["star"]["type"],
+        other=config["star"]["other"]
+    threads: config["star"]["threads"]
+    resources:
+        mem=config["star"]["mem"]
+    conda: "../envs/quantification.yml"
+    shell:
+        """
+        STAR --runThreadN {threads} --genomeDir {input.index} --readFilesIn {input.reads} \
+             --readFilesCommand {params.read_files} --outSAMtype {params.bam_type} \
+             --quantMode GeneCounts --outFileNamePrefix {params.outdir} \
+             --outFilterType BySJout --outFilterMultimapNmax 1 --outFilterMismatchNmax 3 2> {log} \
+             {params.other}
+        """
+
 rule star_reads_per_transcript:
     input: 
         reads=rules.trim_galore.output,
@@ -81,7 +139,7 @@ rule star_reads_per_transcript:
         outdir="results/{project}/quantification/star/star_reads_per_transcript/{subsample}/",
         genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
         read_files=config["star"]["read_files"],
-        gff=config["gff3"]["path"],
+        gff=lambda wildcards: rules.symlink_gff3.output if config["gff3"]["is_local"] else rules.download_gff3.output,
         bam_type=config["star"]["type"],
         other=config["star"]["other"]
     threads:config["star"]["threads"]
@@ -93,4 +151,33 @@ rule star_reads_per_transcript:
                 --readFilesCommand {params.read_files} --outSAMtype {params.bam_type} \
                 --quantMode TranscriptomeSAM --outFileNamePrefix {params.outdir} 2> {log} \
                 {params.other}
+        """
+
+rule star_reads_per_transcript_single:
+    input:
+        reads=rules.trim_galore_single.output,
+        transcriptome=rules.gffread.output,
+        index=rules.star_index.output
+    output:
+        "results/{project}/quantification/star/star_reads_per_transcript_single/{subsample}/Aligned.toTranscriptome.out.bam"
+    log:
+        "logs/{project}/quantification/star_transcript_single/{subsample}.log"
+    params:
+        outdir="results/{project}/quantification/star/star_reads_per_transcript_single/{subsample}/",
+        genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
+        read_files=config["star"]["read_files"],
+        gff=lambda wildcards: rules.symlink_gff3.output if config["gff3"]["is_local"] else rules.download_gff3.output,
+        bam_type=config["star"]["type"],
+        other=config["star"]["other"]
+    threads: config["star"]["threads"]
+    resources:
+        mem=config["star"]["mem"]
+    conda: "../envs/quantification.yml"
+    shell:
+        """
+        STAR --runThreadN {threads} --genomeDir {input.index} --readFilesIn {input.reads} \
+             --readFilesCommand {params.read_files} --outSAMtype {params.bam_type} \
+             --quantMode TranscriptomeSAM --outFileNamePrefix {params.outdir} \
+             --outFilterType BySJout --outFilterMultimapNmax 1 --outFilterMismatchNmax 3 2> {log} \
+             {params.other}
         """

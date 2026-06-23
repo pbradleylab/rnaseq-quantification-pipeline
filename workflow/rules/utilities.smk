@@ -21,23 +21,31 @@ def get_fastqs(wildcards):
 
     return out
 
+def get_seq_method(subsample):
+    seq_method = get_subsample_attributes(subsample, "seq_method", pep)
+    if isinstance(seq_method, list):
+        seq_method = seq_method[0]
+    return seq_method
+
 
 # Symlink reference genome
 rule symlink_genome:
     input: config["genome"]["path"]
     output: "resources/symlink_genome/"+config["genome"]["name"]+".fa"
+    log: "logs/resources/symlink_genome.log"
     shell:
         """
-        ln -s {input} {output}
+        ln -s {input} {output} 2> {log}
         """
 
 # Symlink reference genome annotations in gff3 format
 rule symlink_gff3:
     input: config["gff3"]["path"]
     output: "resources/symlink_gff3/"+config["genome_name"]+".gff3"
+    log: "logs/resources/symlink_gff3.log"
     shell:
         """
-        ln -s {input} {output}
+        ln -s {input} {output} 2> {log}
         """
 
 # Create symlink that has the file renamed to specific ending
@@ -50,13 +58,14 @@ rule symlink_files:
         read2="resources/{project}/raw/{subsample}_R2.fastq.gz"
     params:
         outdir="resources/{project}/raw/"
+    log: "logs/{project}/raw/{subsample}.log"
     resources:
         mem_mb=1024
     run:
         if input.read1 and input.read2:
             # Create symlinks for paired-end reads if they exist
-            shell("ln -s {input.read1} {output.read1}")
-            shell("ln -s {input.read2} {output.read2}")
+            shell("ln -s {input.read1} {output.read1} 2> {log}")
+            shell("ln -s {input.read2} {output.read2} 2>> {log}")
         else:
             # If paired-end reads are missing, raise an error to skip the rule
             raise ValueError(f"Skipping symlink_files: Paired-end reads not found for {wildcards.subsample}.")
@@ -66,7 +75,8 @@ rule symlink_files_single:
     output: "resources/{project}/raw/{subsample}.fastq.gz",
     params:
         outdir="resources/{project}/raw/"
+    log: "logs/{project}/raw/{subsample}.log"
     shell:
         """
-        ln -s {input} {output}
+        ln -s {input} {output} 2> {log}
         """

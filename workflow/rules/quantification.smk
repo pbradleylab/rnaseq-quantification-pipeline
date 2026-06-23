@@ -1,8 +1,5 @@
 """ Add rules to this section that are related to quantification.
 """
-include: "metrics.smk"
-include: "trimming.smk"
-
 def get_h5(wildcards):
     out = []
     for subsample in pep.subsample_table.subsample.tolist():

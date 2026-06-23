@@ -1,9 +1,6 @@
 """ Add rules to this section that are related to quality control and post processing.
 """
-from scripts.utils import *
 configfile: "config/config.json"
-include: "utilities.smk"
-include: "resources.smk"
 
 def get_fastq_input(wildcards):
     return get_subsample_attributes(wildcards.subsample, "reads", pep)

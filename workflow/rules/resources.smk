@@ -71,7 +71,7 @@ rule kallisto_index:
     output: f"resources/{config['genome']['name']}/{config['genome']['name']}.kallisto.index"
     params:
         name=config["genome"]["name"]
-    resources: mem=config["kallisto"]["mem"]
+    resources: mem_mb=config["kallisto"]["mem"]
     log: "logs/resources/kallisto_index.log"
     conda: "../envs/quantification.yml"
     shell:
@@ -96,7 +96,7 @@ rule star_index:
         ref=lambda wildcards: rules.symlink_genome.output if config["genome"]["is_local"] else rules.download_genome.output,
         gff=rules.convert_gff_to_gtf.output
     output: directory("resources/star/")
-    resources: mem=config["star"]["mem"]
+    resources: mem_mb=config["star"]["mem"]
     threads: config["star"]["threads"]
     log: "logs/resources/star_index.log"
     conda: "../envs/quantification.yml"

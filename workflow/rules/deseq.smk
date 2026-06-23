@@ -2,21 +2,11 @@ configfile: "config/config.json"
 configfile: "config/tools.json"
 
 def get_quant_method(wildcards):
-    method = []
-    for subsample in pep.subsample_table.subsample.tolist():
-        project = get_subsample_attributes(subsample, "project", pep)
-        seq_method = get_seq_method(subsample)
-        if config["quantification_tool"].lower() == "kallisto":
-            method.append(rules.merge_kallisto.output[1].format(project=project))
-        elif config["quantification_tool"].lower() == "star":
-            if seq_method == "paired_end":
-                method.append(rules.star_reads_per_gene.output[0].format(project=project, subsample=subsample))
-                method.append(rules.star_reads_per_transcript.output[0].format(project=project, subsample=subsample))
-            elif seq_method == "single_end":
-                method.append(rules.star_reads_per_gene_single.output[0].format(project=project, subsample=subsample))
-                method.append(rules.star_reads_per_transcript_single.output[0].format(project=project, subsample=subsample))
-
-    return list(set(method))
+    if config["quantification_tool"].lower() == "kallisto":
+        return rules.merge_kallisto.output.counts.format(project=wildcards.project)
+    if config["quantification_tool"].lower() == "star":
+        return rules.merge_star_counts.output[0].format(project=wildcards.project)
+    raise ValueError(f"Unsupported quantification_tool: {config['quantification_tool']}")
 
 
 rule deseq2:

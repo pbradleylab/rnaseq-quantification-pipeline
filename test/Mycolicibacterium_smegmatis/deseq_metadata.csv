@@ -1,7 +1,9 @@
-sample,condition,batch
-test1,control,1
-test2,control,1
-test3,treated,1
-test4,treated,2
-test5,control,2
-test6,treated,2
+sample_name,Time,batch
+test1,0min,1
+test2,0min,1
+test3,30min,1
+test4,30min,2
+test5,0min,2
+test6,30min,2
+test7,0min,3
+test8,30min,3

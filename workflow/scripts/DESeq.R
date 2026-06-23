@@ -29,8 +29,10 @@ fm = as.formula(paste0("~", opt$variable_to_analyze))
 
 #We need to first change the first column into the row names with the following command
 count_data = count_data %>% remove_rownames %>% column_to_rownames(var = "target_id")
-count_data = count_data[,-c(1)]
-#if it comes FALSE we need to turn it into a matrix using the following command, if it is TRUE the command is ommited 
+if ("length" %in% colnames(count_data)) {
+count_data = count_data[, colnames(count_data) != "length"]
+}
+#if it comes FALSE we need to turn it into a matrix using the following command, if it is TRUE the command is ommited
 count_data_mtx = as.matrix(count_data)
 
 #Very important to notice is that you can only have integer in your matrix. to ensure this the following command will round up all decimals
@@ -38,7 +40,14 @@ count_data_mtx = as.matrix(count_data)
 count_data_mtx = ceiling(count_data_mtx)
 
 #Move the first col id names into the rownames so that later can match everything
-metadata = metadata %>% remove_rownames %>% column_to_rownames(var= "sample_name")
+sample_id_col = if ("sample_name" %in% colnames(metadata)) {
+"sample_name"
+} else if ("sample" %in% colnames(metadata)) {
+"sample"
+} else {
+stop("Metadata must include a sample_name or sample column.")
+}
+metadata = metadata %>% remove_rownames %>% column_to_rownames(var = sample_id_col)
 
 
 #Now we verify if the names from the data and metadata matches (both must come TRUE)

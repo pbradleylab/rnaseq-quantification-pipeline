@@ -17,8 +17,22 @@ option_list = list(
 			type="character", default="output.tsv"),
         make_option(c("-p", "--plot_path"),
                         type="character", default="output.png"),
+        make_option(c("--plot_svg_path"),
+                        type="character", default="output.svg"),
         make_option(c("--plot_pdf_path"),
                         type="character", default="output.pdf"),
+        make_option(c("--expression_boxplot_path"),
+                        type="character", default="normalized_expression_boxplot.png"),
+        make_option(c("--expression_boxplot_svg_path"),
+                        type="character", default="normalized_expression_boxplot.svg"),
+        make_option(c("--expression_boxplot_pdf_path"),
+                        type="character", default="normalized_expression_boxplot.pdf"),
+        make_option(c("--expression_density_path"),
+                        type="character", default="normalized_expression_density.png"),
+        make_option(c("--expression_density_svg_path"),
+                        type="character", default="normalized_expression_density.svg"),
+        make_option(c("--expression_density_pdf_path"),
+                        type="character", default="normalized_expression_density.pdf"),
         make_option(c("--log2fc_threshold"),
                         type="double", default=0.6),
         make_option(c("--padj_threshold"),
@@ -31,7 +45,14 @@ opt_parser = OptionParser(option_list=option_list)
 opt = parse_args(opt_parser)
 dir.create(dirname(opt$output_file), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$plot_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$plot_svg_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$plot_pdf_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$expression_boxplot_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$expression_boxplot_svg_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$expression_boxplot_pdf_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$expression_density_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$expression_density_svg_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$expression_density_pdf_path), recursive=TRUE, showWarnings=FALSE)
 
 #Assign a variable to both files
 count_data = read.csv(opt$counts_data, header = TRUE, sep = "\t")
@@ -87,6 +108,14 @@ res[order(res$padj),]
 write.csv(as.data.frame(res[order(res$padj),]), file = opt$output_file)
 }
 
+save_plot = function(plot, png_path, svg_path, pdf_path, width=7, height=5) {
+ggsave(png_path, plot=plot, width=width, height=height, dpi=300)
+svg(svg_path, width=width, height=height)
+print(plot)
+dev.off()
+ggsave(pdf_path, plot=plot, width=width, height=height)
+}
+
 #Read and assign a variable to the output file
 df = as.data.frame(res[order(res$padj),])
 df$target_id = rownames(df)
@@ -129,5 +158,58 @@ plot = ggplot(df, aes(x=log2FoldChange, y=padj_plot, color=status)) +
         color=NULL
     )
 
-ggsave(opt$plot_path, plot=plot, width=7, height=5, dpi=300)
-ggsave(opt$plot_pdf_path, plot=plot, width=7, height=5)
+save_plot(plot, opt$plot_path, opt$plot_svg_path, opt$plot_pdf_path)
+
+normalized_counts = counts(dds, normalized=TRUE)
+normalized_df = as.data.frame(normalized_counts) %>%
+    rownames_to_column(var="target_id") %>%
+    pivot_longer(
+        cols=-target_id,
+        names_to="sample",
+        values_to="normalized_count"
+    ) %>%
+    left_join(
+        metadata %>% rownames_to_column(var="sample"),
+        by="sample"
+    ) %>%
+    mutate(log10_normalized_count=log10(normalized_count + 1))
+
+expression_boxplot = ggplot(
+    normalized_df,
+    aes(x=sample, y=log10_normalized_count, fill=.data[[opt$variable_to_analyze]])
+) +
+    geom_boxplot(outlier.size=0.4) +
+    theme_minimal() +
+    theme(axis.text.x=element_text(angle=45, hjust=1)) +
+    labs(
+        x="sample",
+        y="log10 normalized count + 1",
+        fill=opt$variable_to_analyze
+    )
+
+expression_density = ggplot(
+    normalized_df,
+    aes(x=log10_normalized_count, color=.data[[opt$variable_to_analyze]])
+) +
+    geom_density(na.rm=TRUE) +
+    theme_minimal() +
+    labs(
+        x="log10 normalized count + 1",
+        y="density",
+        color=opt$variable_to_analyze
+    )
+
+save_plot(
+    expression_boxplot,
+    opt$expression_boxplot_path,
+    opt$expression_boxplot_svg_path,
+    opt$expression_boxplot_pdf_path,
+    width=8,
+    height=5
+)
+save_plot(
+    expression_density,
+    opt$expression_density_path,
+    opt$expression_density_svg_path,
+    opt$expression_density_pdf_path
+)

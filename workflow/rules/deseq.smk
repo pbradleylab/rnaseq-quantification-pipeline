@@ -20,7 +20,14 @@ rule deseq2:
     output:
         diffexp="results/{project}/differential_expression/{project}.tsv",
         plot="results/{project}/differential_expression/{project}.png",
+        plot_svg="results/{project}/differential_expression/{project}.svg",
         plot_pdf="results/{project}/differential_expression/{project}.pdf",
+        expression_boxplot="results/{project}/differential_expression/{project}_normalized_expression_boxplot.png",
+        expression_boxplot_svg="results/{project}/differential_expression/{project}_normalized_expression_boxplot.svg",
+        expression_boxplot_pdf="results/{project}/differential_expression/{project}_normalized_expression_boxplot.pdf",
+        expression_density="results/{project}/differential_expression/{project}_normalized_expression_density.png",
+        expression_density_svg="results/{project}/differential_expression/{project}_normalized_expression_density.svg",
+        expression_density_pdf="results/{project}/differential_expression/{project}_normalized_expression_density.pdf",
     log:
         "logs/{project}/differential_expression/deseq2.log",
     conda:
@@ -33,5 +40,5 @@ rule deseq2:
         label_top_n=config["deseq2"].get("label_top_n", 10),
     shell:
         """
-        Rscript workflow/scripts/DESeq.R --counts_data {input.counts} --metadata_file {input.metadata} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.diffexp} --plot_path {output.plot} --plot_pdf_path {output.plot_pdf} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        Rscript workflow/scripts/DESeq.R --counts_data {input.counts} --metadata_file {input.metadata} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.diffexp} --plot_path {output.plot} --plot_svg_path {output.plot_svg} --plot_pdf_path {output.plot_pdf} --expression_boxplot_path {output.expression_boxplot} --expression_boxplot_svg_path {output.expression_boxplot_svg} --expression_boxplot_pdf_path {output.expression_boxplot_pdf} --expression_density_path {output.expression_density} --expression_density_svg_path {output.expression_density_svg} --expression_density_pdf_path {output.expression_density_pdf} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
         """

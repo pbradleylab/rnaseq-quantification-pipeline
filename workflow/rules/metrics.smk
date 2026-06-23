@@ -12,15 +12,118 @@ def get_fastq_input(wildcards):
     return get_subsample_attributes(wildcards.subsample, "reads", pep)
 
 
+def get_quant_counts(wildcards):
+    if config["quantification_tool"].lower() == "kallisto":
+        return rules.merge_kallisto.output.counts.format(project=wildcards.project)
+    if config["quantification_tool"].lower() == "star":
+        return rules.merge_star_counts.output[0].format(project=wildcards.project)
+    raise ValueError(
+        f"Unsupported quantification_tool: {config['quantification_tool']}"
+    )
+
+
+def get_qc_fastqc(wildcards):
+    out = []
+    for subsample in pep.subsample_table.subsample.tolist():
+        project = get_subsample_attributes(subsample, "project", pep)
+        if project != wildcards.project:
+            continue
+        seq_method = get_seq_method(subsample, pep)
+        if seq_method == "paired_end":
+            out.append(
+                rules.fastqc.output[0].format(project=project, subsample=subsample)
+            )
+            out.append(
+                rules.fastqc_trimmed.output.r1.format(
+                    project=project, subsample=subsample
+                )
+            )
+            out.append(
+                rules.fastqc_trimmed.output.r2.format(
+                    project=project, subsample=subsample
+                )
+            )
+        elif seq_method == "single_end":
+            out.append(
+                rules.fastqc_single.output[0].format(
+                    project=project, subsample=subsample
+                )
+            )
+            out.append(
+                rules.fastqc_trimmed_single.output[0].format(
+                    project=project, subsample=subsample
+                )
+            )
+    return out
+
+
+def get_qc_fastq_screen(wildcards):
+    out = []
+    for subsample in pep.subsample_table.subsample.tolist():
+        project = get_subsample_attributes(subsample, "project", pep)
+        if project != wildcards.project:
+            continue
+        seq_method = get_seq_method(subsample, pep)
+        if seq_method == "paired_end":
+            out.append(
+                rules.fastq_screen.output[0].format(
+                    project=project, subsample=subsample
+                )
+            )
+        elif seq_method == "single_end":
+            out.append(
+                rules.fastq_screen_single.output[0].format(
+                    project=project, subsample=subsample
+                )
+            )
+    return out
+
+
+def get_qc_star_logs(wildcards):
+    out = []
+    if config["quantification_tool"].lower() != "star":
+        return out
+    for subsample in pep.subsample_table.subsample.tolist():
+        project = get_subsample_attributes(subsample, "project", pep)
+        if project != wildcards.project:
+            continue
+        seq_method = get_seq_method(subsample, pep)
+        if seq_method == "paired_end":
+            out.append(
+                rules.star_reads_per_gene.output.log_final.format(
+                    project=project, subsample=subsample
+                )
+            )
+        elif seq_method == "single_end":
+            out.append(
+                rules.star_reads_per_gene_single.output.log_final.format(
+                    project=project, subsample=subsample
+                )
+            )
+    return out
+
+
 def get_multiqc_subsamples(wildcards):
     metricsLST = []
     for subsample in pep.subsample_table.subsample.tolist():
         project = get_subsample_attributes(subsample, "project", pep)
+        if project != wildcards.project:
+            continue
         seq_method = get_seq_method(subsample, pep)
         # Always run rules on the outside
         if seq_method == "paired_end":
             metricsLST.append(
                 rules.fastqc.output[0].format(project=project, subsample=subsample)
+            )
+            metricsLST.append(
+                rules.fastqc_trimmed.output.r1.format(
+                    project=project, subsample=subsample
+                )
+            )
+            metricsLST.append(
+                rules.fastqc_trimmed.output.r2.format(
+                    project=project, subsample=subsample
+                )
             )
             metricsLST.append(
                 rules.fastq_screen.output[0].format(
@@ -30,6 +133,11 @@ def get_multiqc_subsamples(wildcards):
         elif seq_method == "single_end":
             metricsLST.append(
                 rules.fastqc_single.output[0].format(
+                    project=project, subsample=subsample
+                )
+            )
+            metricsLST.append(
+                rules.fastqc_trimmed_single.output[0].format(
                     project=project, subsample=subsample
                 )
             )
@@ -243,6 +351,71 @@ rule fastqc_single:
         """
         mkdir -p {params.outdir}
         fastqc {input.read1} --extract -t {threads} -o {params.outdir} 2> {log}
+        """
+
+
+rule fastqc_trimmed:
+    input:
+        read1=rules.trim_galore.output.r1,
+        read2=rules.trim_galore.output.r2,
+    output:
+        r1="results/{project}/reports/fastqc_trimmed/{subsample}_R1_val_1_fastqc.zip",
+        r2="results/{project}/reports/fastqc_trimmed/{subsample}_R2_val_2_fastqc.zip",
+    log:
+        "logs/{project}/reports/fastqc_trimmed/{subsample}.log",
+    conda:
+        "../envs/metrics.yml"
+    threads: config["fastqc"]["threads"]
+    resources:
+        mem_mb=config["fastqc"]["mem"],
+    params:
+        outdir="results/{project}/reports/fastqc_trimmed/",
+    shell:
+        """
+        mkdir -p {params.outdir}
+        fastqc {input.read1} {input.read2} --extract -t {threads} -o {params.outdir} 2> {log}
+        """
+
+
+rule fastqc_trimmed_single:
+    input:
+        read1=rules.trim_galore_single.output,
+    output:
+        "results/{project}/reports/fastqc_trimmed/{subsample}_trimmed_fastqc.zip",
+    log:
+        "logs/{project}/reports/fastqc_trimmed/{subsample}.log",
+    conda:
+        "../envs/metrics.yml"
+    threads: config["fastqc"]["threads"]
+    resources:
+        mem_mb=config["fastqc"]["mem"],
+    params:
+        outdir="results/{project}/reports/fastqc_trimmed/",
+    shell:
+        """
+        mkdir -p {params.outdir}
+        fastqc {input.read1} --extract -t {threads} -o {params.outdir} 2> {log}
+        """
+
+
+rule qc_summary:
+    input:
+        metadata=config["metadata"],
+        counts=get_quant_counts,
+        fastqc=get_qc_fastqc,
+        fastq_screen=get_qc_fastq_screen,
+        star_logs=get_qc_star_logs,
+    output:
+        "results/{project}/final/qc/{project}_sample_qc_summary.tsv",
+    log:
+        "logs/{project}/reports/qc_summary.log",
+    conda:
+        "../envs/metrics.yml"
+    resources:
+        mem_mb=config["multiqc"]["mem"],
+    shell:
+        """
+        python workflow/scripts/summarize_qc.py --metadata {input.metadata} --counts {input.counts} --output {output} --fastqc {input.fastqc} --fastq-screen {input.fastq_screen} --star-logs {input.star_logs} 2> {log}
         """
 
 

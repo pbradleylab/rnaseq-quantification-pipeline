@@ -3,5 +3,5 @@ channels:
   - bioconda
   - conda-forge
 dependencies:
-  - kallisto=0.51.1
+  - kallisto=0.52.0
   - star=2.7.11b

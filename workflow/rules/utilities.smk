@@ -31,7 +31,7 @@ def get_seq_method(subsample):
 # Symlink reference genome
 rule symlink_genome:
     input: config["genome"]["path"]
-    output: "resources/symlink_genome/"+config["genome"]["name"]+".fa"
+    output: f"resources/symlink_genome/{config['genome']['name']}.fa"
     log: "logs/resources/symlink_genome.log"
     shell:
         """
@@ -41,7 +41,7 @@ rule symlink_genome:
 # Symlink reference genome annotations in gff3 format
 rule symlink_gff3:
     input: config["gff3"]["path"]
-    output: "resources/symlink_gff3/"+config["genome_name"]+".gff3"
+    output: f"resources/symlink_gff3/{config['genome']['name']}.gff3"
     log: "logs/resources/symlink_gff3.log"
     shell:
         """

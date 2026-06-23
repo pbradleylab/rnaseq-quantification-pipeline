@@ -57,7 +57,7 @@ rule gffread:
     input:
         gff3=lambda wildcards: rules.symlink_gff3.output if config["gff3"]["is_local"] else rules.download_gff3.output,
         ref=lambda wildcards: rules.symlink_genome.output if config["genome"]["is_local"] else rules.download_genome.output
-    output: "resources/"+config["genome"]["name"]+"/"+config["genome"]["name"]+".fa"
+    output: f"resources/{config['genome']['name']}/{config['genome']['name']}.fa"
     log: "logs/resources/gffread.log"
     conda: "../envs/resources.yml"
     shell:
@@ -68,7 +68,7 @@ rule gffread:
 # Generate the Kallisto index
 rule kallisto_index:
     input: rules.gffread.output
-    output: "resources/"+config["genome"]["name"]+"/"+config["genome"]["name"]+".kallisto.index"
+    output: f"resources/{config['genome']['name']}/{config['genome']['name']}.kallisto.index"
     params:
         name=config["genome"]["name"]
     resources: mem=config["kallisto"]["mem"]
@@ -82,7 +82,7 @@ rule kallisto_index:
 
 rule convert_gff_to_gtf:
     input: lambda wildcards: rules.symlink_gff3.output if config["gff3"]["is_local"] else rules.download_gff3.output
-    output: "resources/"+config["genome_name"]+"/star.gtf"
+    output: f"resources/{config['genome']['name']}/star.gtf"
     log: "logs/resources/convert_gff_to_gtf.log"
     conda: "../envs/resources.yml"
     shell:

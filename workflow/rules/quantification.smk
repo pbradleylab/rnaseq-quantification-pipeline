@@ -24,7 +24,7 @@ rule kallisto:
     log: "logs/{project}/quantification/kallisto/{subsample}.log"
     params:
         outdir="results/{project}/quantification/kallisto/{subsample}/",
-        genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index"
+        genome=f"resources/{config['genome']['name']}/{config['genome']['name']}.transcriptome_index"
     threads:config["kallisto"]["threads"]
     resources: mem=config["kallisto"]["mem"]
     conda: "../envs/quantification.yml"
@@ -44,7 +44,7 @@ rule kallisto_single:
         "logs/{project}/quantification/kallisto_single/{subsample}.log"
     params:
         outdir="results/{project}/quantification/kallisto_single/{subsample}/",
-        genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
+        genome=f"resources/{config['genome']['name']}/{config['genome']['name']}.transcriptome_index",
         frag_len=200,  # Set fragment length estimate
         frag_sd=20     # Set fragment length standard deviation
     threads: config["kallisto"]["threads"]
@@ -83,7 +83,7 @@ rule star_reads_per_gene:
     log: "logs/{project}/quantification/star_gene/{subsample}.log"
     params:
         outdir="results/{project}/quantification/star/star_reads_per_gene/{subsample}/",
-        genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
+        genome=f"resources/{config['genome']['name']}/{config['genome']['name']}.transcriptome_index",
         read_files=config["star"]["read_files"],
         gff=lambda wildcards: rules.symlink_gff3.output if config["gff3"]["is_local"] else rules.download_gff3.output,
         bam_type=config["star"]["type"],
@@ -110,7 +110,7 @@ rule star_reads_per_gene_single:
         "logs/{project}/quantification/star_gene_single/{subsample}.log"
     params:
         outdir="results/{project}/quantification/star/star_reads_per_gene_single/{subsample}/",
-        genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
+        genome=f"resources/{config['genome']['name']}/{config['genome']['name']}.transcriptome_index",
         read_files=config["star"]["read_files"],
         gff=lambda wildcards: rules.symlink_gff3.output if config["gff3"]["is_local"] else rules.download_gff3.output,
         bam_type=config["star"]["type"],
@@ -137,7 +137,7 @@ rule star_reads_per_transcript:
     log: "logs/{project}/quantification/star_transcript/{subsample}.log"
     params:
         outdir="results/{project}/quantification/star/star_reads_per_transcript/{subsample}/",
-        genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
+        genome=f"resources/{config['genome']['name']}/{config['genome']['name']}.transcriptome_index",
         read_files=config["star"]["read_files"],
         gff=lambda wildcards: rules.symlink_gff3.output if config["gff3"]["is_local"] else rules.download_gff3.output,
         bam_type=config["star"]["type"],
@@ -164,7 +164,7 @@ rule star_reads_per_transcript_single:
         "logs/{project}/quantification/star_transcript_single/{subsample}.log"
     params:
         outdir="results/{project}/quantification/star/star_reads_per_transcript_single/{subsample}/",
-        genome="resources/"+config["genome_name"]+"/"+config["genome_name"]+".transcriptome_index",
+        genome=f"resources/{config['genome']['name']}/{config['genome']['name']}.transcriptome_index",
         read_files=config["star"]["read_files"],
         gff=lambda wildcards: rules.symlink_gff3.output if config["gff3"]["is_local"] else rules.download_gff3.output,
         bam_type=config["star"]["type"],

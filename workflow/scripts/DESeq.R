@@ -16,11 +16,22 @@ option_list = list(
 	make_option(c("-o", "--output_file"),
 			type="character", default="output.tsv"),
         make_option(c("-p", "--plot_path"),
-                        type="character", default="output.pdf"))
+                        type="character", default="output.png"),
+        make_option(c("--plot_pdf_path"),
+                        type="character", default="output.pdf"),
+        make_option(c("--log2fc_threshold"),
+                        type="double", default=0.6),
+        make_option(c("--padj_threshold"),
+                        type="double", default=0.05),
+        make_option(c("--label_top_n"),
+                        type="integer", default=10))
 
 opt_parser = OptionParser(option_list=option_list)
 
 opt = parse_args(opt_parser)
+dir.create(dirname(opt$output_file), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$plot_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$plot_pdf_path), recursive=TRUE, showWarnings=FALSE)
 
 #Assign a variable to both files
 count_data = read.csv(opt$counts_data, header = TRUE, sep = "\t")
@@ -78,9 +89,45 @@ write.csv(as.data.frame(res[order(res$padj),]), file = opt$output_file)
 
 #Read and assign a variable to the output file
 df = as.data.frame(res[order(res$padj),])
+df$target_id = rownames(df)
+df$padj_plot = ifelse(is.na(df$padj) | df$padj <= 0, NA, -log10(df$padj))
+df$status = "Not significant"
+df$status[
+    !is.na(df$padj) &
+        df$padj < opt$padj_threshold &
+        df$log2FoldChange >= opt$log2fc_threshold
+] = "Up"
+df$status[
+    !is.na(df$padj) &
+        df$padj < opt$padj_threshold &
+        df$log2FoldChange <= -opt$log2fc_threshold
+] = "Down"
 
-#Generate a preliminary graph for the user to see
-plot = ggplot(df, aes(x=log2FoldChange, y=-log10(pvalue))) + geom_point() + theme_minimal() + scale_color_manual(values=c("blue", "black", "red")) + geom_vline(xintercept=c(-0.6, 0.6), col="red") + geom_hline(yintercept=-log10(0.05), col="red")
-pdf(file= opt$plot_path)
-print(plot)
-dev.off()
+label_df = df %>%
+    filter(!is.na(padj), !is.na(log2FoldChange)) %>%
+    arrange(padj) %>%
+    head(opt$label_top_n)
+
+plot = ggplot(df, aes(x=log2FoldChange, y=padj_plot, color=status)) +
+    geom_point(alpha=0.75, na.rm=TRUE) +
+    geom_text(
+        data=label_df,
+        aes(label=target_id),
+        color="black",
+        size=2.5,
+        vjust=-0.6,
+        check_overlap=TRUE,
+        na.rm=TRUE
+    ) +
+    theme_minimal() +
+    scale_color_manual(values=c("Down"="#2C7BB6", "Not significant"="#595959", "Up"="#D7191C")) +
+    geom_vline(xintercept=c(-opt$log2fc_threshold, opt$log2fc_threshold), col="#D7191C", linetype="dashed") +
+    geom_hline(yintercept=-log10(opt$padj_threshold), col="#D7191C", linetype="dashed") +
+    labs(
+        x="log2 fold change",
+        y="-log10 adjusted p-value",
+        color=NULL
+    )
+
+ggsave(opt$plot_path, plot=plot, width=7, height=5, dpi=300)
+ggsave(opt$plot_pdf_path, plot=plot, width=7, height=5)

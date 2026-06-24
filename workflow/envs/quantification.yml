@@ -1,7 +1,8 @@
 channels:
-  - anaconda
-  - bioconda
   - conda-forge
+  - bioconda
+  - defaults
 dependencies:
   - kallisto=0.52.0
+  - subread=2.1.1
   - star=2.7.11b

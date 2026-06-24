@@ -1,7 +1,7 @@
 channels:
-  - anaconda
-  - bioconda
   - conda-forge
+  - bioconda
+  - defaults
 dependencies:
   - fastq-screen=0.16.0
   - gffread=0.12.9

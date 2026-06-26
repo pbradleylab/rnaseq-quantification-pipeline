@@ -143,6 +143,7 @@ Current DESeq2 configuration is controlled by `config/tools.json`:
 
 - `deseq2.variable_to_analyze`
 - `deseq2.reference_in_variable`
+- `deseq2.design_formula`
 - `deseq2.log2fc_threshold`
 - `deseq2.padj_threshold`
 - `deseq2.label_top_n`
@@ -346,7 +347,13 @@ QC and report options:
 
 DESeq2 options:
 
-- `deseq2.variable_to_analyze`: metadata column used in the design formula.
+- `deseq2.design_formula`: DESeq2 model formula, such as `~ Time` or
+  `~ batch + Time`. All columns in the formula must exist in the metadata.
+  Numeric metadata columns are modeled as continuous variables by DESeq2; use
+  categorical labels or `factor(batch)` in the formula for categorical batches.
+- `deseq2.variable_to_analyze`: metadata column used for the reported
+  condition contrast and QC plot coloring. This column must be included in
+  `deseq2.design_formula`.
 - `deseq2.reference_in_variable`: reference level for that metadata column.
 - `deseq2.log2fc_threshold`: volcano plot fold-change threshold.
 - `deseq2.padj_threshold`: adjusted p-value threshold.
@@ -424,8 +431,9 @@ general statistical modeling interface.
 
 Current behavior:
 
-- One metadata variable is used in the DESeq2 design.
-- One configured reference level is used for the DESeq2 comparison.
+- The configured `deseq2.design_formula` is used for the DESeq2 model.
+- One configured condition variable and reference level are used for the
+  reported DESeq2 contrast.
 - Count and metadata sample IDs must match exactly.
 - Conditions with fewer than the configured minimum biological replicate count
   emit a preflight warning. This does not stop the workflow because DESeq2 can

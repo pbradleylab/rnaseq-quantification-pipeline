@@ -9,6 +9,8 @@ option_list = list(
 			type="character", default=NULL),
 	make_option(c("-m", "--metadata_file"),
 			type="character", default=NULL),
+	make_option(c("--design_formula"),
+			type="character", default=NULL),
 	make_option(c("-v", "--variable_to_analyze"),
 			type="character", default=NULL),
 	make_option(c("-r", "--reference_in_variable"),
@@ -81,7 +83,7 @@ dir.create(dirname(opt$ma_plot_svg_path), recursive=TRUE, showWarnings=FALSE)
 #Assign a variable to both files
 count_data = read.csv(opt$counts_data, header = TRUE, sep = "\t", check.names = FALSE)
 metadata=read.csv(opt$metadata_file, header = TRUE, check.names = FALSE)
-fm = as.formula(paste0("~", opt$variable_to_analyze))
+fm = as.formula(opt$design_formula)
 
 #We need to first change the first column into the row names with the following command
 count_data = count_data %>% remove_rownames %>% column_to_rownames(var = "target_id")
@@ -105,6 +107,24 @@ stop("Metadata must include a sample_name or sample column.")
 }
 metadata = metadata %>% remove_rownames %>% column_to_rownames(var = sample_id_col)
 
+if (!opt$variable_to_analyze %in% colnames(metadata)) {
+stop(paste("Metadata does not contain variable_to_analyze:", opt$variable_to_analyze))
+}
+if (!opt$reference_in_variable %in% metadata[[opt$variable_to_analyze]]) {
+stop(
+    paste(
+        "Metadata column",
+        opt$variable_to_analyze,
+        "does not contain reference level:",
+        opt$reference_in_variable
+    )
+)
+}
+metadata[[opt$variable_to_analyze]] = relevel(
+    factor(metadata[[opt$variable_to_analyze]]),
+    ref=opt$reference_in_variable
+)
+
 
 missing_counts = setdiff(rownames(metadata), colnames(count_data_mtx))
 extra_counts = setdiff(colnames(count_data_mtx), rownames(metadata))
@@ -120,19 +140,24 @@ stop(
 }
 count_data_mtx = count_data_mtx[, rownames(metadata), drop=FALSE]
 
-#now we can run the DESeq with our matrix MAKE SURE TO CHANGE THE DESIGN TO THE NAME OF THE SECOND COLUMN FROM THE METADATA)
 dds = DESeqDataSetFromMatrix(countData = count_data_mtx, colData = metadata, design = fm)
-
-#now we need to set the reference for our study MAKE SURE YOU CHANGE THE ref TO ONE OF YOUR CONDITIONS IN THE COLUMN TWO OF METADATA
-
-dds[[opt$variable_to_analyze]] = relevel(dds[[opt$variable_to_analyze]], ref = opt$reference_in_variable)
 
 #now we can run the differential gene expression analysis
 
 dds = DESeq(dds)
 
-#Still trying to find what the following command does but it need to be done
-res = results(dds)
+contrast_levels = setdiff(levels(colData(dds)[[opt$variable_to_analyze]]), opt$reference_in_variable)
+if (length(contrast_levels) < 1) {
+stop(
+    paste(
+        "Metadata column",
+        opt$variable_to_analyze,
+        "must contain at least one non-reference level."
+    )
+)
+}
+contrast_level = contrast_levels[1]
+res = results(dds, contrast=c(opt$variable_to_analyze, contrast_level, opt$reference_in_variable))
 
 #now we need to order the gene expression by adjusted p-value
 res[order(res$padj),]

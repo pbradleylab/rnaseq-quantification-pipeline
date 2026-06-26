@@ -1,4 +1,5 @@
 import csv
+import re
 import sys
 from pathlib import Path
 
@@ -31,6 +32,17 @@ def read_deseq_metadata(path):
         rows = list(reader)
         columns = reader.fieldnames or []
     return rows, columns
+
+
+def get_design_formula_terms(design_formula):
+    formula = str(design_formula).strip()
+    if not formula.startswith("~"):
+        return formula, []
+    expression = formula[1:]
+    expression = re.sub(r"`([^`]+)`", r"\1", expression)
+    tokens = re.findall(r"[A-Za-z_][A-Za-z0-9_.]*", expression)
+    reserved = {"I", "factor", "as.factor", "log", "log2", "log10", "sqrt"}
+    return formula, [token for token in tokens if token not in reserved]
 
 
 def warn_preflight(message):
@@ -79,6 +91,28 @@ def validate_preflight_inputs(pep, config):
     deseq_config = config.get("deseq2", {})
     variable_to_analyze = deseq_config.get("variable_to_analyze")
     reference_in_variable = deseq_config.get("reference_in_variable")
+    design_formula = deseq_config.get("design_formula")
+    if not design_formula and variable_to_analyze:
+        design_formula = f"~ {variable_to_analyze}"
+    if not design_formula:
+        errors.append("config/tools.json must define deseq2.design_formula.")
+    else:
+        design_formula, design_terms = get_design_formula_terms(design_formula)
+        if not design_formula.startswith("~"):
+            errors.append("deseq2.design_formula must start with '~'.")
+        missing_design_terms = [
+            term for term in design_terms if term not in metadata_columns
+        ]
+        if missing_design_terms:
+            errors.append(
+                "DESeq2 design formula contains metadata columns that do not exist: "
+                f"{_format_list(missing_design_terms)}"
+            )
+        if variable_to_analyze and variable_to_analyze not in design_terms:
+            errors.append(
+                f"DESeq2 design formula '{design_formula}' must include "
+                f"variable_to_analyze '{variable_to_analyze}'."
+            )
     try:
         min_replicates = int(deseq_config.get("min_replicates_per_condition", 2))
     except (TypeError, ValueError):

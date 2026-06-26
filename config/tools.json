@@ -44,6 +44,7 @@
         "mem": 8192
     },
     "deseq2":{
+        "design_formula":"~ Time",
         "reference_in_variable":"0min",
         "variable_to_analyze":"Time",
         "log2fc_threshold": 0.6,

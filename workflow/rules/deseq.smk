@@ -43,6 +43,9 @@ rule deseq2:
     conda:
         "../envs/DESeq2.yml"
     params:
+        design_formula=config["deseq2"].get(
+            "design_formula", f"~ {config['deseq2']['variable_to_analyze']}"
+        ),
         reference_in_variable=config["deseq2"]["reference_in_variable"],
         variable_to_analyze=config["deseq2"]["variable_to_analyze"],
         log2fc_threshold=config["deseq2"].get("log2fc_threshold", 0.6),
@@ -50,5 +53,5 @@ rule deseq2:
         label_top_n=config["deseq2"].get("label_top_n", 10),
     shell:
         """
-        Rscript workflow/scripts/DESeq.R --counts_data {input.counts} --metadata_file {input.metadata} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.diffexp} --plot_path {output.plot} --plot_svg_path {output.plot_svg} --plot_pdf_path {output.plot_pdf} --expression_boxplot_path {output.expression_boxplot} --expression_boxplot_svg_path {output.expression_boxplot_svg} --expression_boxplot_pdf_path {output.expression_boxplot_pdf} --expression_density_path {output.expression_density} --expression_density_svg_path {output.expression_density_svg} --expression_density_pdf_path {output.expression_density_pdf} --sample_distance_heatmap_path {output.sample_distance_heatmap} --sample_distance_heatmap_svg_path {output.sample_distance_heatmap_svg} --pca_path {output.pca} --pca_svg_path {output.pca_svg} --library_size_factors_path {output.library_size_factors} --library_size_factors_svg_path {output.library_size_factors_svg} --ma_plot_path {output.ma_plot} --ma_plot_svg_path {output.ma_plot_svg} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        Rscript workflow/scripts/DESeq.R --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.diffexp} --plot_path {output.plot} --plot_svg_path {output.plot_svg} --plot_pdf_path {output.plot_pdf} --expression_boxplot_path {output.expression_boxplot} --expression_boxplot_svg_path {output.expression_boxplot_svg} --expression_boxplot_pdf_path {output.expression_boxplot_pdf} --expression_density_path {output.expression_density} --expression_density_svg_path {output.expression_density_svg} --expression_density_pdf_path {output.expression_density_pdf} --sample_distance_heatmap_path {output.sample_distance_heatmap} --sample_distance_heatmap_svg_path {output.sample_distance_heatmap_svg} --pca_path {output.pca} --pca_svg_path {output.pca_svg} --library_size_factors_path {output.library_size_factors} --library_size_factors_svg_path {output.library_size_factors_svg} --ma_plot_path {output.ma_plot} --ma_plot_svg_path {output.ma_plot_svg} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
         """

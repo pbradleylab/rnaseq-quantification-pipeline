@@ -30,20 +30,27 @@ inside `workflow/`.
 - `scripts/summarize_qc.py`: builds the final per-sample QC table.
 - `scripts/check_count_annotation_overlap.py`: compares count-matrix
   `target_id` values with configured annotation feature IDs before DESeq2 runs.
+- `scripts/summarize_gene_biotype_counts.py`: summarizes count support by
+  `gene_biotype` and count class when the annotation contains `gene_biotype`.
 - `scripts/DESeq.R`: runs DESeq2 in a selected mode to generate the result
-  table, normalized count matrix, transformed count matrix, Cook's distance
-  reports, volcano plot, MA plot, normalized expression plots, sample distance
-  heatmap, PCA plot, or library size and size-factor plot.
+  table, significant gene tables, normalized count matrix, transformed count
+  matrix, Cook's distance reports, volcano plot, MA plot, normalized expression
+  plots, sample distance heatmap, PCA plot, or library size and size-factor
+  plot.
 
 ## Important Outputs
 
 - `results/{project}/final/multiqc/multiqc_report.html`
 - `results/{project}/final/qc/{project}_sample_qc_summary.tsv`
 - `results/{project}/final/qc/{project}_count_annotation_overlap.tsv`
+- `results/{project}/final/qc/{project}_gene_biotype_count_summary.tsv`
 - `results/{project}/final/quantification/star/gene_counts_all_samples.tsv`
 - `results/{project}/final/quantification/featurecounts/gene_counts_all_samples.tsv`
 - `results/{project}/final/quantification/kallisto/transcript_counts_all_samples.tsv`
 - `results/{project}/differential_expression/{project}.tsv`
+- `results/{project}/differential_expression/{project}_significant_genes.tsv`
+- `results/{project}/differential_expression/{project}_significant_upregulated_genes.tsv`
+- `results/{project}/differential_expression/{project}_significant_downregulated_genes.tsv`
 - `results/{project}/differential_expression/{project}_normalized_counts.tsv`
 - `results/{project}/differential_expression/{project}_transformed_counts.tsv`
 - `results/{project}/differential_expression/{project}_cooks_gene_report.tsv`

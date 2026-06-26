@@ -24,6 +24,9 @@ or a mixture of both.
   configured DESeq2 reference levels before jobs are scheduled.
 - Check count-matrix IDs against annotation IDs before DESeq2 starts and report
   how many overlap.
+- Summarize count support by `gene_biotype` and count class when the annotation
+  includes `gene_biotype`; otherwise write a report explaining that the summary
+  was not calculated.
 - Handle paired-end and single-end RNA-seq libraries in the same project.
 - Discover FASTQ files from configurable path patterns in `config/pepconfig.yml`.
 - Recognize common paired-end read name patterns such as `_R1`, `_R2`,
@@ -141,6 +144,8 @@ The workflow runs a basic DESeq2 analysis after quantification. It can:
 - Export transformed count matrices using `vst`, `rlog`, or automatic
   selection.
 - Export Cook's distance gene- and sample-level outlier reports.
+- Export significant, upregulated, and downregulated gene tables using the
+  configured `deseq2.padj_threshold` and `deseq2.log2fc_threshold`.
 - Generate modular DESeq2 plots as independent workflow jobs so one plot
   failure does not prevent unrelated plots from running.
 - Keep DESeq2 plots under `results/{project}/differential_expression/`.
@@ -174,6 +179,8 @@ For each project, final outputs are written under `results/{project}/`.
 - `final/qc/{project}_sample_qc_summary.tsv`: per-sample QC summary table.
 - `final/qc/{project}_count_annotation_overlap.tsv`: count-matrix ID and
   annotation ID overlap report.
+- `final/qc/{project}_gene_biotype_count_summary.tsv`: gene biotype and count
+  class summary, or a message explaining that `gene_biotype` was not present.
 - `final/quantification/star/gene_counts_all_samples.tsv`: STAR gene-count
   matrix when `quantification_tool` is `star`.
 - `final/quantification/featurecounts/gene_counts_all_samples.tsv`:
@@ -184,6 +191,12 @@ For each project, final outputs are written under `results/{project}/`.
 - `final/quantification/kallisto/transcript_tpms_all_samples.tsv`: Kallisto
   transcript TPM matrix when `quantification_tool` is `kallisto`.
 - `differential_expression/{project}.tsv`: DESeq2 results table.
+- `differential_expression/{project}_significant_genes.tsv`: genes passing the
+  configured adjusted p-value and absolute log2 fold-change thresholds.
+- `differential_expression/{project}_significant_upregulated_genes.tsv`:
+  significant genes with positive log2 fold change.
+- `differential_expression/{project}_significant_downregulated_genes.tsv`:
+  significant genes with negative log2 fold change.
 - `differential_expression/{project}_normalized_counts.tsv`: DESeq2
   size-factor normalized counts.
 - `differential_expression/{project}_transformed_counts.tsv`: transformed
@@ -470,6 +483,9 @@ Current behavior:
   before DESeq2 starts. The workflow writes the overlap count and example
   non-overlapping IDs to
   `results/{project}/final/qc/{project}_count_annotation_overlap.tsv`.
+- If the annotation has `gene_biotype` attributes, the workflow summarizes
+  annotated genes by biotype and total-count class. If not, it writes an
+  explanatory `not_calculated` message to the same report path.
 - Conditions with fewer than the configured minimum biological replicate count
   emit a preflight warning. This does not stop the workflow because DESeq2 can
   still run, but interpretation is weak.
@@ -477,6 +493,8 @@ Current behavior:
   gene count matrices.
 - Normalized counts, transformed counts, and Cook's distance outlier reports are
   exported under `results/{project}/differential_expression/`.
+- Significant gene tables are exported for the configured DESeq2 comparison
+  using the configured adjusted p-value and log2 fold-change thresholds.
 - DESeq2 plots are separate workflow rules under
   `results/{project}/differential_expression/`, so independent plot outputs can
   be rerun separately after a plot-specific failure.

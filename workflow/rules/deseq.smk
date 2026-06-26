@@ -51,6 +51,23 @@ rule count_annotation_overlap:
         """
 
 
+rule gene_biotype_count_summary:
+    input:
+        counts=get_quant_method,
+        annotation=get_annotation,
+    output:
+        "results/{project}/final/qc/{project}_gene_biotype_count_summary.tsv",
+    log:
+        "logs/{project}/differential_expression/deseq2/gene_biotype_count_summary.log",
+    params:
+        feature_type=config["featurecounts"].get("feature_type", "gene"),
+        attribute=config["featurecounts"].get("attribute", "ID"),
+    shell:
+        """
+        python3 workflow/scripts/summarize_gene_biotype_counts.py --counts {input.counts} --annotation {input.annotation} --feature-type {params.feature_type} --id-attribute {params.attribute} --output {output} 2> {log}
+        """
+
+
 rule deseq2:
     input:
         counts=get_quant_method,
@@ -67,6 +84,27 @@ rule deseq2:
     shell:
         """
         Rscript workflow/scripts/DESeq.R --mode results --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.diffexp} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        """
+
+
+rule deseq2_significant_gene_tables:
+    input:
+        counts=get_quant_method,
+        metadata=config["metadata"],
+        diffexp=rules.deseq2.output.diffexp,
+    output:
+        all="results/{project}/differential_expression/{project}_significant_genes.tsv",
+        up="results/{project}/differential_expression/{project}_significant_upregulated_genes.tsv",
+        down="results/{project}/differential_expression/{project}_significant_downregulated_genes.tsv",
+    log:
+        "logs/{project}/differential_expression/deseq2/significant_gene_tables.log",
+    conda:
+        "../envs/DESeq2.yml"
+    params:
+        **deseq_common_params(config)
+    shell:
+        """
+        Rscript workflow/scripts/DESeq.R --mode significant_genes --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.all} --up_file {output.up} --down_file {output.down} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
         """
 
 

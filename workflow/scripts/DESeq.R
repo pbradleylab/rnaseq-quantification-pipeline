@@ -15,6 +15,8 @@ option_list = list(
     make_option(c("--svg_file"), type="character", default=NULL),
     make_option(c("--pdf_file"), type="character", default=NULL),
     make_option(c("--sample_report_file"), type="character", default=NULL),
+    make_option(c("--up_file"), type="character", default=NULL),
+    make_option(c("--down_file"), type="character", default=NULL),
     make_option(c("--transform_method"), type="character", default="vst"),
     make_option(c("--log2fc_threshold"), type="double", default=0.6),
     make_option(c("--padj_threshold"), type="double", default=0.05),
@@ -37,6 +39,12 @@ parse_options = function() {
     }
     if (!is.null(opt$sample_report_file)) {
         dir.create(dirname(opt$sample_report_file), recursive=TRUE, showWarnings=FALSE)
+    }
+    if (!is.null(opt$up_file)) {
+        dir.create(dirname(opt$up_file), recursive=TRUE, showWarnings=FALSE)
+    }
+    if (!is.null(opt$down_file)) {
+        dir.create(dirname(opt$down_file), recursive=TRUE, showWarnings=FALSE)
     }
     opt
 }
@@ -153,6 +161,37 @@ save_table = function(res, opt) {
         quote=FALSE,
         col.names=NA
     )
+}
+
+
+write_result_table = function(df, output_file) {
+    write.table(
+        df,
+        file=output_file,
+        sep="\t",
+        quote=FALSE,
+        row.names=FALSE
+    )
+}
+
+
+save_significant_tables = function(res, opt) {
+    df = format_results(res, opt) %>%
+        select(target_id, baseMean, log2FoldChange, lfcSE, stat, pvalue, padj, status, everything()) %>%
+        filter(
+            !is.na(padj),
+            padj < opt$padj_threshold,
+            abs(log2FoldChange) >= opt$log2fc_threshold
+        ) %>%
+        arrange(padj)
+
+    write_result_table(df, opt$output_file)
+    if (!is.null(opt$up_file)) {
+        write_result_table(df %>% filter(status == "Up"), opt$up_file)
+    }
+    if (!is.null(opt$down_file)) {
+        write_result_table(df %>% filter(status == "Down"), opt$down_file)
+    }
 }
 
 
@@ -441,6 +480,8 @@ run = function() {
 
     if (opt$mode == "results") {
         save_table(res, opt)
+    } else if (opt$mode == "significant_genes") {
+        save_significant_tables(res, opt)
     } else if (opt$mode == "normalized_counts") {
         save_matrix(counts(dds, normalized=TRUE), opt$output_file)
     } else if (opt$mode == "transformed_counts") {

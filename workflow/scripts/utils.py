@@ -1,3 +1,181 @@
+import csv
+from pathlib import Path
+
+
+def _as_list(value):
+    if value is None:
+        return []
+    if isinstance(value, list):
+        return value
+    return [value]
+
+
+def _format_list(values):
+    return ", ".join(str(value) for value in sorted(values))
+
+
+def _duplicates(values):
+    seen = set()
+    duplicates = set()
+    for value in values:
+        if value in seen:
+            duplicates.add(value)
+        seen.add(value)
+    return duplicates
+
+
+def read_deseq_metadata(path):
+    with open(path, newline="") as handle:
+        reader = csv.DictReader(handle)
+        rows = list(reader)
+        columns = reader.fieldnames or []
+    return rows, columns
+
+
+def validate_preflight_inputs(pep, config):
+    errors = []
+
+    metadata_path = config.get("metadata")
+    if not metadata_path:
+        errors.append("config/config.json must define a metadata CSV path.")
+        metadata_rows = []
+        metadata_columns = []
+    elif not Path(metadata_path).exists():
+        errors.append(f"Metadata file does not exist: {metadata_path}")
+        metadata_rows = []
+        metadata_columns = []
+    else:
+        metadata_rows, metadata_columns = read_deseq_metadata(metadata_path)
+        if not metadata_rows:
+            errors.append(f"Metadata file has no sample rows: {metadata_path}")
+
+    sample_id_col = None
+    if "sample_name" in metadata_columns:
+        sample_id_col = "sample_name"
+    elif "sample" in metadata_columns:
+        sample_id_col = "sample"
+    elif metadata_columns:
+        errors.append("Metadata must include a sample_name or sample column.")
+
+    metadata_samples = []
+    if sample_id_col:
+        metadata_samples = [
+            row.get(sample_id_col, "").strip()
+            for row in metadata_rows
+            if row.get(sample_id_col, "").strip()
+        ]
+        duplicate_metadata_samples = _duplicates(metadata_samples)
+        if duplicate_metadata_samples:
+            errors.append(
+                "Metadata contains duplicate sample IDs: "
+                f"{_format_list(duplicate_metadata_samples)}"
+            )
+
+    deseq_config = config.get("deseq2", {})
+    variable_to_analyze = deseq_config.get("variable_to_analyze")
+    reference_in_variable = deseq_config.get("reference_in_variable")
+    if not variable_to_analyze:
+        errors.append("config/tools.json must define deseq2.variable_to_analyze.")
+    elif metadata_columns and variable_to_analyze not in metadata_columns:
+        errors.append(
+            f"DESeq2 condition column '{variable_to_analyze}' is missing from metadata."
+        )
+
+    if variable_to_analyze in metadata_columns:
+        levels = {
+            row.get(variable_to_analyze, "").strip()
+            for row in metadata_rows
+            if row.get(variable_to_analyze, "").strip()
+        }
+        if len(levels) < 2:
+            errors.append(
+                f"DESeq2 condition column '{variable_to_analyze}' must contain "
+                "at least two levels."
+            )
+        if not reference_in_variable:
+            errors.append("config/tools.json must define deseq2.reference_in_variable.")
+        elif reference_in_variable not in levels:
+            errors.append(
+                f"DESeq2 reference level '{reference_in_variable}' is not present in "
+                f"metadata column '{variable_to_analyze}'. Observed levels: "
+                f"{_format_list(levels)}"
+            )
+
+    pep_sample_names = pep.sample_table.sample_name.tolist()
+    duplicate_pep_samples = _duplicates(pep_sample_names)
+    if duplicate_pep_samples:
+        errors.append(
+            "PEP sample table contains duplicate sample IDs: "
+            f"{_format_list(duplicate_pep_samples)}"
+        )
+
+    pep_samples = set(pep_sample_names)
+    subsample_samples = set(pep.subsample_table.sample_name.tolist())
+    samples_without_subsamples = pep_samples - subsample_samples
+    if samples_without_subsamples:
+        errors.append(
+            "PEP samples without subsample FASTQ entries: "
+            f"{_format_list(samples_without_subsamples)}"
+        )
+
+    metadata_sample_set = set(metadata_samples)
+    samples_without_metadata = subsample_samples - metadata_sample_set
+    metadata_without_fastqs = metadata_sample_set - subsample_samples
+    if samples_without_metadata:
+        errors.append(
+            "PEP FASTQ samples missing from metadata: "
+            f"{_format_list(samples_without_metadata)}"
+        )
+    if metadata_without_fastqs:
+        errors.append(
+            "Metadata samples missing from PEP FASTQ samples: "
+            f"{_format_list(metadata_without_fastqs)}"
+        )
+
+    for subsample in pep.subsample_table.subsample.tolist():
+        subsample_rows = pep.subsample_table[
+            pep.subsample_table["subsample"] == subsample
+        ]
+        sample_name = subsample_rows["sample_name"].tolist()[0]
+        seq_method = get_seq_method(subsample, pep)
+        fastqs = get_fastqs(subsample, pep)
+        reads = _as_list(get_subsample_attributes(subsample, "reads", pep))
+
+        missing_reads = [read for read in reads if not Path(read).exists()]
+        if missing_reads:
+            errors.append(
+                f"Subsample '{subsample}' has FASTQ paths that do not exist: "
+                f"{_format_list(missing_reads)}"
+            )
+
+        if seq_method == "paired_end":
+            if not fastqs["r1"] or not fastqs["r2"]:
+                errors.append(
+                    f"Paired-end subsample '{subsample}' for sample '{sample_name}' "
+                    "must have both R1 and R2 FASTQs."
+                )
+            elif len(fastqs["r1"]) != len(fastqs["r2"]):
+                errors.append(
+                    f"Paired-end subsample '{subsample}' for sample '{sample_name}' "
+                    "has a different number of R1 and R2 FASTQs."
+                )
+        elif seq_method == "single_end":
+            if not fastqs["single"]:
+                errors.append(
+                    f"Single-end subsample '{subsample}' for sample '{sample_name}' "
+                    "must have at least one FASTQ."
+                )
+        else:
+            errors.append(
+                f"Subsample '{subsample}' has unsupported seq_method '{seq_method}'."
+            )
+
+    if errors:
+        raise ValueError(
+            "Preflight input validation failed:\n- " + "\n- ".join(errors)
+        )
+
+
 def get_subsample_attributes(subsample, attribute, pep):
     subsample_rows = pep.subsample_table[pep.subsample_table["subsample"] == subsample]
     return pep.get_sample(subsample_rows["sample_name"].tolist()[0])[attribute]

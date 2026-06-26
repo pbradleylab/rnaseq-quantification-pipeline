@@ -13,6 +13,9 @@ configfile: "config/tools.json"
 pepfile: config["pepfile"]
 
 
+validate_preflight_inputs(pep, config)
+
+
 include: "rules/utilities.smk"
 include: "rules/resources.smk"
 include: "rules/trimming.smk"

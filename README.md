@@ -20,6 +20,8 @@ or a mixture of both.
 - Read sample and subsample metadata through a PEP configuration.
 - Track sample-level metadata, project names, organisms, sequencing method, and
   subsample identifiers.
+- Validate sample metadata, FASTQ discovery, DESeq2 condition columns, and
+  configured DESeq2 reference levels before jobs are scheduled.
 - Handle paired-end and single-end RNA-seq libraries in the same project.
 - Discover FASTQ files from configurable path patterns in `config/pepconfig.yml`.
 - Recognize common paired-end read name patterns such as `_R1`, `_R2`,

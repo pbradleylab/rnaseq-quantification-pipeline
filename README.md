@@ -20,6 +20,13 @@ or a mixture of both.
 - Read sample and subsample metadata through a PEP configuration.
 - Track sample-level metadata, project names, organisms, sequencing method, and
   subsample identifiers.
+- Validate sample metadata, FASTQ discovery, DESeq2 condition columns, and
+  configured DESeq2 reference levels before jobs are scheduled.
+- Check count-matrix IDs against annotation IDs before DESeq2 starts and report
+  how many overlap.
+- Summarize count support by `gene_biotype` and count class when the annotation
+  includes `gene_biotype`; otherwise write a report explaining that the summary
+  was not calculated.
 - Handle paired-end and single-end RNA-seq libraries in the same project.
 - Discover FASTQ files from configurable path patterns in `config/pepconfig.yml`.
 - Recognize common paired-end read name patterns such as `_R1`, `_R2`,
@@ -129,18 +136,38 @@ The workflow runs a basic DESeq2 analysis after quantification. It can:
 - Read sample metadata from the CSV configured in `config/config.json`.
 - Match count matrix columns to metadata sample IDs.
 - Stop with a clear error when count and metadata sample names do not match.
-- Use a configurable metadata variable as the DESeq2 design factor.
+- Use a configurable DESeq2 design formula, such as `~ Time` or
+  `~ batch + Time`.
 - Use a configurable reference level for that variable.
 - Export a DESeq2 result table.
-- Generate a volcano plot.
-- Generate normalized expression boxplots.
-- Generate normalized expression density plots.
-- Save generated plots as PNG, SVG, and PDF.
+- Export DESeq2 normalized counts.
+- Export transformed count matrices using `vst`, `rlog`, or automatic
+  selection.
+- Export Cook's distance gene- and sample-level outlier reports.
+- Export significant, upregulated, and downregulated gene tables using the
+  configured `deseq2.padj_threshold` and `deseq2.log2fc_threshold`.
+- Generate modular DESeq2 plots as independent workflow jobs so one plot
+  failure does not prevent unrelated plots from running.
+- Write DESeq2 plots into plot-specific result directories such as
+  `results/{project}/sample_distance_heatmap/`.
+
+Generated DESeq2 plots include:
+
+- Volcano plot: log2 fold change against adjusted p-value significance.
+- MA plot: mean normalized expression against log2 fold change.
+- Normalized expression boxplot: per-sample normalized count distributions.
+- Normalized expression density plot: global normalized count distributions.
+- Sample distance heatmap: sample-to-sample distances from transformed counts.
+- PCA plot: transformed-count ordination for outliers, batch effects, and
+  condition separation.
+- Library size and size-factor plot: raw library sizes and DESeq2 size factors
+  for detecting extreme samples.
 
 Current DESeq2 configuration is controlled by `config/tools.json`:
 
 - `deseq2.variable_to_analyze`
 - `deseq2.reference_in_variable`
+- `deseq2.design_formula`
 - `deseq2.log2fc_threshold`
 - `deseq2.padj_threshold`
 - `deseq2.label_top_n`
@@ -151,6 +178,10 @@ For each project, final outputs are written under `results/{project}/`.
 
 - `final/multiqc/multiqc_report.html`: combined QC report.
 - `final/qc/{project}_sample_qc_summary.tsv`: per-sample QC summary table.
+- `count_annotation_overlap/{project}_count_annotation_overlap.tsv`: count-matrix ID and
+  annotation ID overlap report.
+- `gene_biotype_count_summary/{project}_gene_biotype_count_summary.tsv`: gene biotype and count
+  class summary, or a message explaining that `gene_biotype` was not present.
 - `final/quantification/star/gene_counts_all_samples.tsv`: STAR gene-count
   matrix when `quantification_tool` is `star`.
 - `final/quantification/featurecounts/gene_counts_all_samples.tsv`:
@@ -160,16 +191,37 @@ For each project, final outputs are written under `results/{project}/`.
   transcript estimated-count matrix when `quantification_tool` is `kallisto`.
 - `final/quantification/kallisto/transcript_tpms_all_samples.tsv`: Kallisto
   transcript TPM matrix when `quantification_tool` is `kallisto`.
-- `differential_expression/{project}.tsv`: DESeq2 results table.
-- `differential_expression/{project}.png`: volcano plot.
-- `differential_expression/{project}.svg`: volcano plot.
-- `differential_expression/{project}.pdf`: volcano plot.
-- `differential_expression/{project}_normalized_expression_boxplot.png`
-- `differential_expression/{project}_normalized_expression_boxplot.svg`
-- `differential_expression/{project}_normalized_expression_boxplot.pdf`
-- `differential_expression/{project}_normalized_expression_density.png`
-- `differential_expression/{project}_normalized_expression_density.svg`
-- `differential_expression/{project}_normalized_expression_density.pdf`
+- `deseq2/{project}.tsv`: DESeq2 results table.
+- `significant_gene_tables/{project}_significant_genes.tsv`: genes passing the
+  configured adjusted p-value and absolute log2 fold-change thresholds.
+- `significant_gene_tables/{project}_significant_upregulated_genes.tsv`:
+  significant genes with positive log2 fold change.
+- `significant_gene_tables/{project}_significant_downregulated_genes.tsv`:
+  significant genes with negative log2 fold change.
+- `normalized_counts/{project}_normalized_counts.tsv`: DESeq2
+  size-factor normalized counts.
+- `transformed_counts/{project}_transformed_counts.tsv`: transformed
+  counts from the configured DESeq2 transform method.
+- `cooks_reports/{project}_cooks_gene_report.tsv`: per-gene Cook's
+  distance summary and outlier flag.
+- `cooks_reports/{project}_cooks_sample_report.tsv`: per-sample
+  Cook's distance summary.
+- `volcano_plot/{project}_volcano_plot.png`: volcano plot.
+- `volcano_plot/{project}_volcano_plot.svg`: volcano plot.
+- `ma_plot/{project}_ma_plot.png`: MA plot.
+- `ma_plot/{project}_ma_plot.svg`: MA plot.
+- `normalized_expression_boxplot/{project}_normalized_expression_boxplot.png`
+- `normalized_expression_boxplot/{project}_normalized_expression_boxplot.svg`
+- `normalized_expression_boxplot/{project}_normalized_expression_boxplot.pdf`
+- `normalized_expression_density/{project}_normalized_expression_density.png`
+- `normalized_expression_density/{project}_normalized_expression_density.svg`
+- `normalized_expression_density/{project}_normalized_expression_density.pdf`
+- `sample_distance_heatmap/{project}_sample_distance_heatmap.png`
+- `sample_distance_heatmap/{project}_sample_distance_heatmap.svg`
+- `pca/{project}_pca.png`
+- `pca/{project}_pca.svg`
+- `library_sizes_size_factors/{project}_library_sizes_size_factors.png`
+- `library_sizes_size_factors/{project}_library_sizes_size_factors.svg`
 
 Intermediate outputs are written under `resources/`, `results/{project}/`, and
 `logs/`. Snakemake-managed Conda environments are written under `.snakemake/`.
@@ -336,11 +388,23 @@ QC and report options:
 
 DESeq2 options:
 
-- `deseq2.variable_to_analyze`: metadata column used in the design formula.
+- `deseq2.design_formula`: DESeq2 model formula, such as `~ Time` or
+  `~ batch + Time`. All columns in the formula must exist in the metadata.
+  Numeric metadata columns are modeled as continuous variables by DESeq2; use
+  categorical labels or `factor(batch)` in the formula for categorical batches.
+- `deseq2.variable_to_analyze`: metadata column used for the reported
+  condition contrast and QC plot coloring. This column must be included in
+  `deseq2.design_formula`.
 - `deseq2.reference_in_variable`: reference level for that metadata column.
 - `deseq2.log2fc_threshold`: volcano plot fold-change threshold.
 - `deseq2.padj_threshold`: adjusted p-value threshold.
 - `deseq2.label_top_n`: number of top genes to label on the volcano plot.
+- `deseq2.transform_method`: transform used for transformed count exports,
+  PCA, and sample distance heatmaps. Supported values are `vst`, `rlog`, and
+  `auto`. The `vst` setting falls back to the full variance-stabilizing
+  transformation for very small matrices.
+- `deseq2.min_replicates_per_condition`: minimum biological replicates expected
+  per condition before the workflow emits a DESeq2 interpretation warning.
 
 ## Running The Workflow
 
@@ -412,16 +476,34 @@ general statistical modeling interface.
 
 Current behavior:
 
-- One metadata variable is used in the DESeq2 design.
-- One configured reference level is used for the DESeq2 comparison.
+- The configured `deseq2.design_formula` is used for the DESeq2 model.
+- One configured condition variable and reference level are used for the
+  reported DESeq2 contrast.
 - Count and metadata sample IDs must match exactly.
+- Count matrix `target_id` values are compared with annotation feature IDs
+  before DESeq2 starts. The workflow writes the overlap count and example
+  non-overlapping IDs to
+  `results/{project}/count_annotation_overlap/{project}_count_annotation_overlap.tsv`.
+- If the annotation has `gene_biotype` attributes, the workflow summarizes
+  annotated genes by biotype and total-count class. If not, it writes an
+  explanatory `not_calculated` message to the same report path.
+- Conditions with fewer than the configured minimum biological replicate count
+  emit a preflight warning. This does not stop the workflow because DESeq2 can
+  still run, but interpretation is weak.
 - Kallisto transcript counts are passed into the same DESeq2 entry point as the
   gene count matrices.
-- Plots are generated for the configured DESeq2 comparison.
+- Normalized counts, transformed counts, and Cook's distance outlier reports are
+  exported under their own directories in `results/{project}/`.
+- Significant gene tables are exported for the configured DESeq2 comparison
+  using the configured adjusted p-value and log2 fold-change thresholds.
+- DESeq2 plots are separate workflow rules that write to plot-specific
+  directories under `results/{project}/`, so independent plot outputs can be
+  rerun separately after a plot-specific failure.
+- Volcano and MA plots are generated for the configured DESeq2 comparison.
+- QC plots are generated from normalized or transformed count matrices.
 
-Common extensions that are not currently implemented include multi-factor
-design formulas, explicit contrast tables, PCA plots, sample distance heatmaps,
-MA plots, and automated replicate checks.
+Common extensions that are not currently implemented include explicit contrast
+tables and multiple named DESeq2 contrasts in one workflow run.
 
 ## Common Problems
 

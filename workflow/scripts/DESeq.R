@@ -37,6 +37,10 @@ option_list = list(
                         type="character", default="sample_distance_heatmap.png"),
         make_option(c("--sample_distance_heatmap_svg_path"),
                         type="character", default="sample_distance_heatmap.svg"),
+        make_option(c("--pca_path"),
+                        type="character", default="pca.png"),
+        make_option(c("--pca_svg_path"),
+                        type="character", default="pca.svg"),
         make_option(c("--log2fc_threshold"),
                         type="double", default=0.6),
         make_option(c("--padj_threshold"),
@@ -59,6 +63,8 @@ dir.create(dirname(opt$expression_density_svg_path), recursive=TRUE, showWarning
 dir.create(dirname(opt$expression_density_pdf_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$sample_distance_heatmap_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$sample_distance_heatmap_svg_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$pca_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$pca_svg_path), recursive=TRUE, showWarnings=FALSE)
 
 #Assign a variable to both files
 count_data = read.csv(opt$counts_data, header = TRUE, sep = "\t", check.names = FALSE)
@@ -279,4 +285,42 @@ ggsave(
 )
 svg(opt$sample_distance_heatmap_svg_path, width=7, height=6)
 print(sample_distance_heatmap)
+dev.off()
+
+pca = prcomp(t(assay(vsd)))
+percent_var = pca$sdev^2 / sum(pca$sdev^2)
+pca_df = as.data.frame(pca$x[, c("PC1", "PC2"), drop=FALSE]) %>%
+    rownames_to_column(var="sample") %>%
+    left_join(
+        metadata %>% rownames_to_column(var="sample"),
+        by="sample"
+    )
+
+pca_plot = ggplot(
+    pca_df,
+    aes(x=PC1, y=PC2, color=.data[[opt$variable_to_analyze]], label=sample)
+) +
+    geom_point(size=3, alpha=0.85) +
+    geom_text(
+        color="black",
+        size=3,
+        vjust=-0.7,
+        check_overlap=TRUE
+    ) +
+    theme_minimal() +
+    labs(
+        x=paste0("PC1: ", round(percent_var[1] * 100), "% variance"),
+        y=paste0("PC2: ", round(percent_var[2] * 100), "% variance"),
+        color=opt$variable_to_analyze
+    )
+
+ggsave(
+    opt$pca_path,
+    plot=pca_plot,
+    width=7,
+    height=5,
+    dpi=300
+)
+svg(opt$pca_svg_path, width=7, height=5)
+print(pca_plot)
 dev.off()

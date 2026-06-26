@@ -32,6 +32,8 @@ rule deseq2:
         expression_density_pdf="results/{project}/differential_expression/{project}_normalized_expression_density.pdf",
         sample_distance_heatmap="results/{project}/differential_expression/{project}_sample_distance_heatmap.png",
         sample_distance_heatmap_svg="results/{project}/differential_expression/{project}_sample_distance_heatmap.svg",
+        pca="results/{project}/differential_expression/{project}_pca.png",
+        pca_svg="results/{project}/differential_expression/{project}_pca.svg",
     log:
         "logs/{project}/differential_expression/deseq2.log",
     conda:
@@ -44,5 +46,5 @@ rule deseq2:
         label_top_n=config["deseq2"].get("label_top_n", 10),
     shell:
         """
-        Rscript workflow/scripts/DESeq.R --counts_data {input.counts} --metadata_file {input.metadata} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.diffexp} --plot_path {output.plot} --plot_svg_path {output.plot_svg} --plot_pdf_path {output.plot_pdf} --expression_boxplot_path {output.expression_boxplot} --expression_boxplot_svg_path {output.expression_boxplot_svg} --expression_boxplot_pdf_path {output.expression_boxplot_pdf} --expression_density_path {output.expression_density} --expression_density_svg_path {output.expression_density_svg} --expression_density_pdf_path {output.expression_density_pdf} --sample_distance_heatmap_path {output.sample_distance_heatmap} --sample_distance_heatmap_svg_path {output.sample_distance_heatmap_svg} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        Rscript workflow/scripts/DESeq.R --counts_data {input.counts} --metadata_file {input.metadata} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.diffexp} --plot_path {output.plot} --plot_svg_path {output.plot_svg} --plot_pdf_path {output.plot_pdf} --expression_boxplot_path {output.expression_boxplot} --expression_boxplot_svg_path {output.expression_boxplot_svg} --expression_boxplot_pdf_path {output.expression_boxplot_pdf} --expression_density_path {output.expression_density} --expression_density_svg_path {output.expression_density_svg} --expression_density_pdf_path {output.expression_density_pdf} --sample_distance_heatmap_path {output.sample_distance_heatmap} --sample_distance_heatmap_svg_path {output.sample_distance_heatmap_svg} --pca_path {output.pca} --pca_svg_path {output.pca_svg} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
         """

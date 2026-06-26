@@ -167,6 +167,8 @@ For each project, final outputs are written under `results/{project}/`.
 - `differential_expression/{project}.png`: volcano plot.
 - `differential_expression/{project}.svg`: volcano plot.
 - `differential_expression/{project}.pdf`: volcano plot.
+- `differential_expression/{project}_volcano_plot.png`: volcano plot.
+- `differential_expression/{project}_volcano_plot.svg`: volcano plot.
 - `differential_expression/{project}_normalized_expression_boxplot.png`
 - `differential_expression/{project}_normalized_expression_boxplot.svg`
 - `differential_expression/{project}_normalized_expression_boxplot.pdf`

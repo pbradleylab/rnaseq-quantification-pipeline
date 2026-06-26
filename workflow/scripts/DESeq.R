@@ -23,6 +23,10 @@ option_list = list(
                         type="character", default="output.svg"),
         make_option(c("--plot_pdf_path"),
                         type="character", default="output.pdf"),
+        make_option(c("--volcano_plot_path"),
+                        type="character", default="volcano_plot.png"),
+        make_option(c("--volcano_plot_svg_path"),
+                        type="character", default="volcano_plot.svg"),
         make_option(c("--expression_boxplot_path"),
                         type="character", default="normalized_expression_boxplot.png"),
         make_option(c("--expression_boxplot_svg_path"),
@@ -65,6 +69,8 @@ dir.create(dirname(opt$output_file), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$plot_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$plot_svg_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$plot_pdf_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$volcano_plot_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$volcano_plot_svg_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$expression_boxplot_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$expression_boxplot_svg_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$expression_boxplot_pdf_path), recursive=TRUE, showWarnings=FALSE)
@@ -223,6 +229,16 @@ plot = ggplot(df, aes(x=log2FoldChange, y=padj_plot, color=status)) +
     )
 
 save_plot(plot, opt$plot_path, opt$plot_svg_path, opt$plot_pdf_path)
+ggsave(
+    opt$volcano_plot_path,
+    plot=plot,
+    width=7,
+    height=5,
+    dpi=300
+)
+svg(opt$volcano_plot_svg_path, width=7, height=5)
+print(plot)
+dev.off()
 
 ma_plot = ggplot(
     df,

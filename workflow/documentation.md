@@ -13,8 +13,8 @@ inside `workflow/`.
 - `rules/trimming.smk`: trims paired-end and single-end reads with Trim Galore.
 - `rules/metrics.smk`: runs FastQC, FastQ Screen, GUNC, MultiQC, and the final
   per-sample QC summary.
-- `rules/quantification.smk`: runs Kallisto or STAR quantification and merges
-  per-sample outputs.
+- `rules/quantification.smk`: runs Kallisto, STAR, or FeatureCounts
+  quantification and merges per-sample outputs.
 - `rules/deseq.smk`: runs DESeq2 and writes differential-expression tables and
   plots.
 
@@ -24,6 +24,7 @@ inside `workflow/`.
   and project-level rule inputs.
 - `scripts/combine_star_counts.py`: merges STAR `ReadsPerGene.out.tab` files.
   The `--strandedness` option selects the STAR count column.
+- `scripts/combine_featurecounts.py`: merges per-sample FeatureCounts outputs.
 - `scripts/combine_kallisto.py`: merges Kallisto `abundance.tsv` files from
   paired-end and single-end output directories.
 - `scripts/summarize_qc.py`: builds the final per-sample QC table.
@@ -35,6 +36,7 @@ inside `workflow/`.
 - `results/{project}/final/multiqc/multiqc_report.html`
 - `results/{project}/final/qc/{project}_sample_qc_summary.tsv`
 - `results/{project}/final/quantification/star/gene_counts_all_samples.tsv`
+- `results/{project}/final/quantification/featurecounts/gene_counts_all_samples.tsv`
 - `results/{project}/final/quantification/kallisto/transcript_counts_all_samples.tsv`
 - `results/{project}/differential_expression/{project}.tsv`
 

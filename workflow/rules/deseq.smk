@@ -7,6 +7,8 @@ def get_quant_method(wildcards):
         return rules.merge_kallisto.output.counts.format(project=wildcards.project)
     if config["quantification_tool"].lower() == "star":
         return rules.merge_star_counts.output[0].format(project=wildcards.project)
+    if config["quantification_tool"].lower() == "featurecounts":
+        return rules.merge_featurecounts.output[0].format(project=wildcards.project)
     raise ValueError(
         f"Unsupported quantification_tool: {config['quantification_tool']}"
     )

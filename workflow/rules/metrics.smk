@@ -17,6 +17,8 @@ def get_quant_counts(wildcards):
         return rules.merge_kallisto.output.counts.format(project=wildcards.project)
     if config["quantification_tool"].lower() == "star":
         return rules.merge_star_counts.output[0].format(project=wildcards.project)
+    if config["quantification_tool"].lower() == "featurecounts":
+        return rules.merge_featurecounts.output[0].format(project=wildcards.project)
     raise ValueError(
         f"Unsupported quantification_tool: {config['quantification_tool']}"
     )
@@ -81,7 +83,7 @@ def get_qc_fastq_screen(wildcards):
 
 def get_qc_star_logs(wildcards):
     out = []
-    if config["quantification_tool"].lower() != "star":
+    if config["quantification_tool"].lower() not in ["star", "featurecounts"]:
         return out
     for subsample in pep.subsample_table.subsample.tolist():
         project = get_subsample_attributes(subsample, "project", pep)
@@ -188,6 +190,29 @@ def get_multiqc_subsamples(wildcards):
                 )
                 metricsLST.append(
                     rules.star_reads_per_transcript_single.output.log_final.format(
+                        project=project, subsample=subsample
+                    )
+                )
+        elif config["quantification_tool"].lower() == "featurecounts":
+            if seq_method == "paired_end":
+                metricsLST.append(
+                    rules.featurecounts.output.summary.format(
+                        project=project, subsample=subsample
+                    )
+                )
+                metricsLST.append(
+                    rules.star_reads_per_gene.output.log_final.format(
+                        project=project, subsample=subsample
+                    )
+                )
+            elif seq_method == "single_end":
+                metricsLST.append(
+                    rules.featurecounts_single.output.summary.format(
+                        project=project, subsample=subsample
+                    )
+                )
+                metricsLST.append(
+                    rules.star_reads_per_gene_single.output.log_final.format(
                         project=project, subsample=subsample
                     )
                 )
@@ -415,7 +440,7 @@ rule qc_summary:
         mem_mb=config["multiqc"]["mem"],
     shell:
         """
-        python workflow/scripts/summarize_qc.py --metadata {input.metadata} --counts {input.counts} --output {output} --fastqc {input.fastqc} --fastq-screen {input.fastq_screen} --star-logs {input.star_logs} 2> {log}
+        python3 workflow/scripts/summarize_qc.py --metadata {input.metadata} --counts {input.counts} --output {output} --fastqc {input.fastqc} --fastq-screen {input.fastq_screen} --star-logs {input.star_logs} 2> {log}
         """
 
 

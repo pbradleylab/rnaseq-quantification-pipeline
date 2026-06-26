@@ -31,6 +31,14 @@
         "mem": 1024,
         "threads": 8
     },
+    "featurecounts": {
+        "mem": 1024,
+        "threads": 8,
+        "strandedness": 0,
+        "feature_type": "exon",
+        "attribute": "gene_id",
+        "extra": ""
+    },
     "gunc": {
         "threads": 4,
         "mem": 8192

@@ -55,3 +55,17 @@ def get_star_gene_counts(wildcards, pep, rules):
         elif seq_method == "single_end":
             out.append(rules.star_reads_per_gene_single.output[0].format(project=project, subsample=subsample))
     return out
+
+
+def get_featurecounts_counts(wildcards, pep, rules):
+    out = []
+    for subsample in pep.subsample_table.subsample.tolist():
+        project = get_subsample_attributes(subsample, "project", pep)
+        if project != wildcards.project:
+            continue
+        seq_method = get_seq_method(subsample, pep)
+        if seq_method == "paired_end":
+            out.append(rules.featurecounts.output.counts.format(project=project, subsample=subsample))
+        elif seq_method == "single_end":
+            out.append(rules.featurecounts_single.output.counts.format(project=project, subsample=subsample))
+    return out

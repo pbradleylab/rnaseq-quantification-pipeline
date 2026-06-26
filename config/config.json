@@ -1,7 +1,5 @@
 {
     "pepfile":"config/pepconfig.yml",
-    "genome":"test/Mycolicibacterium_smegmatis/Mycolicibacterium_smegmatis.fa", 
-    "genome_name":"Mycolicibacterium_smegmatis",
     "genome":{
 	    "is_local":true,
 	    "name":"Mycolicibacterium_smegmatis",

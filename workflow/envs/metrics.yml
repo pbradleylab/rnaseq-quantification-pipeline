@@ -1,11 +1,11 @@
 channels:
-  - anaconda
-  - bioconda
   - conda-forge
+  - bioconda
+  - defaults
 dependencies:
-  - multiqc=1.18
+  - python
+  - multiqc=1.35
   - fastqc=0.12.1
-  - fastq-screen=0.15.3
-  - htslib=1.12
-  - samtools=1.12
-  - gunc=1.0.5
+  - fastq-screen=0.16.0
+  - samtools=1.23.1
+  - gunc=1.1.1

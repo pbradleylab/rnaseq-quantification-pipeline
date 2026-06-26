@@ -1,11 +1,12 @@
 channels:
-  - anaconda
-  - bioconda
   - conda-forge
+  - bioconda
+  - defaults
 dependencies:
-  - fastq-screen=0.15.3
-  - gffread=0.12.7
-  - samtools=1.17
-  - star=2.7.10b
-  - gunc=1.0.5
-  - wget
+  - python
+  - fastq-screen=0.16.0
+  - gffread=0.12.9
+  - samtools=1.23.1
+  - star=2.7.11b
+  - gunc=1.1.1
+  - wget=1.25.0

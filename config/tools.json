@@ -9,6 +9,7 @@
         "read_files": "gunzip -c",
         "type": "BAM Unsorted",
         "quant_mode": "TranscriptomeSAM",
+        "gene_counts_strandedness": "unstranded",
         "other": ""
     },
     "fastq_screen": {
@@ -30,12 +31,23 @@
         "mem": 1024,
         "threads": 8
     },
+    "featurecounts": {
+        "mem": 1024,
+        "threads": 8,
+        "strandedness": 0,
+        "feature_type": "gene",
+        "attribute": "ID",
+        "extra": ""
+    },
     "gunc": {
         "threads": 4,
         "mem": 8192
     },
     "deseq2":{
         "reference_in_variable":"0min",
-        "variable_to_analyze":"Time"
+        "variable_to_analyze":"Time",
+        "log2fc_threshold": 0.6,
+        "padj_threshold": 0.05,
+        "label_top_n": 10
     }
 }

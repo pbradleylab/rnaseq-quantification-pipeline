@@ -3,3 +3,4 @@ __pycache__
 resources/*
 logs/
 results/*
+test/Mycolicibacterium_smegmatis/*.fastq.gz

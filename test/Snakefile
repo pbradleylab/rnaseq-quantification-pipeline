@@ -30,8 +30,9 @@ rule get_test_samples:
         r9="Mycolicibacterium_smegmatis/test5_1.fastq.gz",
         r10="Mycolicibacterium_smegmatis/test5_2.fastq.gz",
         r11="Mycolicibacterium_smegmatis/test6_1.fastq.gz",
-        r12="Mycolicibacterium_smegmatis/test6_2.fastq.gz"
-
+        r12="Mycolicibacterium_smegmatis/test6_2.fastq.gz",
+        r13="Mycolicibacterium_smegmatis/test7.fastq.gz",
+        r14="Mycolicibacterium_smegmatis/test8.fastq.gz"
     shell: 
         """
         curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/032/SRR23849832/SRR23849832_1.fastq.gz -o {output.r1}
@@ -46,6 +47,8 @@ rule get_test_samples:
         curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/014/SRR23849814/SRR23849814_2.fastq.gz -o {output.r10}
         curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/013/SRR23849813/SRR23849813_1.fastq.gz -o {output.r11}
         curl -L http://ftp.sra.ebi.ac.uk/vol1/fastq/SRR238/013/SRR23849813/SRR23849813_2.fastq.gz -o {output.r12}
+        curl -L ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR147/042/SRR14743442/SRR14743442.fastq.gz -o {output.r13}
+        curl -L ftp://ftp.sra.ebi.ac.uk/vol1/fastq/SRR147/041/SRR14743441/SRR14743441.fastq.gz -o {output.r14}
         """
 
 rule get_genome:

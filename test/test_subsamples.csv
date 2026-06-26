@@ -5,3 +5,5 @@ test3,test3,rna,paired_end
 test4,test4,rna,paired_end
 test5,test5,rna,paired_end
 test6,test6,rna,paired_end
+test7,test7,rna,single_end
+test8,test8,rna,single_end

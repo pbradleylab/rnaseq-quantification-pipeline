@@ -17,3 +17,14 @@ rule trim_galore:
     resources:mem_mb=config["trim_galore"]["mem"]
     conda: "../envs/trimming.yml"
     shell: "trim_galore --paired {input.read1} {input.read2} -o {params.outdir} 2> {log}"
+
+rule trim_galore_single:
+    input:
+        read1=rules.symlink_files_single.output
+    output: "results/{project}/trimming/trim_galore/{subsample}_trimmed.fq.gz"
+    params:
+        outdir="results/{project}/trimming/trim_galore/"
+    log: "logs/{project}/trimming/trim_galore/{subsample}.log"
+    resources: mem_mb=config["trim_galore"]["mem"]
+    conda: "../envs/trimming.yml"
+    shell: "trim_galore {input.read1} -o {params.outdir} 2> {log}"

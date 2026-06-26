@@ -11,8 +11,17 @@ rule download_fastq_screen_genomes:
     conda: "../envs/resources.yml"
     shell: 
         """
-        fastq_screen --get_genomes > {log} 2>&1
-        mv {params.folder_name} {output} >> {log} 2>&1
+        tmpdir=$(mktemp -d resources/.fastq_screen_genomes.XXXXXX)
+        patched_fastq_screen="$tmpdir/fastq_screen"
+        cp "$(command -v fastq_screen)" "$patched_fastq_screen"
+        python workflow/scripts/patch_fastq_screen_get_genomes.py "$patched_fastq_screen"
+        chmod +x "$patched_fastq_screen"
+        (
+            cd "$tmpdir"
+            ./fastq_screen --get_genomes
+        ) > {log} 2>&1
+        mv "$tmpdir/{params.folder_name}" {output} >> {log} 2>&1
+        rm -rf "$tmpdir"
         """
 
 # Download given genome if needed

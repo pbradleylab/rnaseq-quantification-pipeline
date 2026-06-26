@@ -22,6 +22,8 @@ or a mixture of both.
   subsample identifiers.
 - Validate sample metadata, FASTQ discovery, DESeq2 condition columns, and
   configured DESeq2 reference levels before jobs are scheduled.
+- Check count-matrix IDs against annotation IDs before DESeq2 starts and report
+  how many overlap.
 - Handle paired-end and single-end RNA-seq libraries in the same project.
 - Discover FASTQ files from configurable path patterns in `config/pepconfig.yml`.
 - Recognize common paired-end read name patterns such as `_R1`, `_R2`,
@@ -131,13 +133,25 @@ The workflow runs a basic DESeq2 analysis after quantification. It can:
 - Read sample metadata from the CSV configured in `config/config.json`.
 - Match count matrix columns to metadata sample IDs.
 - Stop with a clear error when count and metadata sample names do not match.
-- Use a configurable metadata variable as the DESeq2 design factor.
+- Use a configurable DESeq2 design formula, such as `~ Time` or
+  `~ batch + Time`.
 - Use a configurable reference level for that variable.
 - Export a DESeq2 result table.
-- Generate a volcano plot.
-- Generate normalized expression boxplots.
-- Generate normalized expression density plots.
-- Save generated plots as PNG, SVG, and PDF.
+- Generate modular DESeq2 plots as independent workflow jobs so one plot
+  failure does not prevent unrelated plots from running.
+- Keep DESeq2 plots under `results/{project}/differential_expression/`.
+
+Generated DESeq2 plots include:
+
+- Volcano plot: log2 fold change against adjusted p-value significance.
+- MA plot: mean normalized expression against log2 fold change.
+- Normalized expression boxplot: per-sample normalized count distributions.
+- Normalized expression density plot: global normalized count distributions.
+- Sample distance heatmap: sample-to-sample distances from transformed counts.
+- PCA plot: transformed-count ordination for outliers, batch effects, and
+  condition separation.
+- Library size and size-factor plot: raw library sizes and DESeq2 size factors
+  for detecting extreme samples.
 
 Current DESeq2 configuration is controlled by `config/tools.json`:
 
@@ -154,6 +168,8 @@ For each project, final outputs are written under `results/{project}/`.
 
 - `final/multiqc/multiqc_report.html`: combined QC report.
 - `final/qc/{project}_sample_qc_summary.tsv`: per-sample QC summary table.
+- `final/qc/{project}_count_annotation_overlap.tsv`: count-matrix ID and
+  annotation ID overlap report.
 - `final/quantification/star/gene_counts_all_samples.tsv`: STAR gene-count
   matrix when `quantification_tool` is `star`.
 - `final/quantification/featurecounts/gene_counts_all_samples.tsv`:
@@ -164,11 +180,10 @@ For each project, final outputs are written under `results/{project}/`.
 - `final/quantification/kallisto/transcript_tpms_all_samples.tsv`: Kallisto
   transcript TPM matrix when `quantification_tool` is `kallisto`.
 - `differential_expression/{project}.tsv`: DESeq2 results table.
-- `differential_expression/{project}.png`: volcano plot.
-- `differential_expression/{project}.svg`: volcano plot.
-- `differential_expression/{project}.pdf`: volcano plot.
 - `differential_expression/{project}_volcano_plot.png`: volcano plot.
 - `differential_expression/{project}_volcano_plot.svg`: volcano plot.
+- `differential_expression/{project}_ma_plot.png`: MA plot.
+- `differential_expression/{project}_ma_plot.svg`: MA plot.
 - `differential_expression/{project}_normalized_expression_boxplot.png`
 - `differential_expression/{project}_normalized_expression_boxplot.svg`
 - `differential_expression/{project}_normalized_expression_boxplot.pdf`
@@ -181,8 +196,6 @@ For each project, final outputs are written under `results/{project}/`.
 - `differential_expression/{project}_pca.svg`
 - `differential_expression/{project}_library_sizes_size_factors.png`
 - `differential_expression/{project}_library_sizes_size_factors.svg`
-- `differential_expression/{project}_ma_plot.png`
-- `differential_expression/{project}_ma_plot.svg`
 
 Intermediate outputs are written under `resources/`, `results/{project}/`, and
 `logs/`. Snakemake-managed Conda environments are written under `.snakemake/`.
@@ -437,15 +450,23 @@ Current behavior:
 - One configured condition variable and reference level are used for the
   reported DESeq2 contrast.
 - Count and metadata sample IDs must match exactly.
+- Count matrix `target_id` values are compared with annotation feature IDs
+  before DESeq2 starts. The workflow writes the overlap count and example
+  non-overlapping IDs to
+  `results/{project}/final/qc/{project}_count_annotation_overlap.tsv`.
 - Conditions with fewer than the configured minimum biological replicate count
   emit a preflight warning. This does not stop the workflow because DESeq2 can
   still run, but interpretation is weak.
 - Kallisto transcript counts are passed into the same DESeq2 entry point as the
   gene count matrices.
-- Plots are generated for the configured DESeq2 comparison.
+- DESeq2 plots are separate workflow rules under
+  `results/{project}/differential_expression/`, so independent plot outputs can
+  be rerun separately after a plot-specific failure.
+- Volcano and MA plots are generated for the configured DESeq2 comparison.
+- QC plots are generated from normalized or transformed count matrices.
 
-Common extensions that are not currently implemented include multi-factor
-design formulas and explicit contrast tables.
+Common extensions that are not currently implemented include explicit contrast
+tables and multiple named DESeq2 contrasts in one workflow run.
 
 ## Common Problems
 

@@ -14,46 +14,198 @@ def get_quant_method(wildcards):
     )
 
 
+def get_annotation(wildcards):
+    if config["gff3"]["is_local"]:
+        return rules.symlink_gff3.output[0]
+    return rules.download_gff3.output[0]
+
+
+def deseq_common_params(config):
+    return {
+        "design_formula": config["deseq2"].get(
+            "design_formula", f"~ {config['deseq2']['variable_to_analyze']}"
+        ),
+        "reference_in_variable": config["deseq2"]["reference_in_variable"],
+        "variable_to_analyze": config["deseq2"]["variable_to_analyze"],
+        "log2fc_threshold": config["deseq2"].get("log2fc_threshold", 0.6),
+        "padj_threshold": config["deseq2"].get("padj_threshold", 0.05),
+        "label_top_n": config["deseq2"].get("label_top_n", 10),
+    }
+
+
+rule count_annotation_overlap:
+    input:
+        counts=get_quant_method,
+        annotation=get_annotation,
+    output:
+        "results/{project}/final/qc/{project}_count_annotation_overlap.tsv",
+    log:
+        "logs/{project}/differential_expression/deseq2/count_annotation_overlap.log",
+    params:
+        feature_type=config["featurecounts"].get("feature_type", "gene"),
+        attribute=config["featurecounts"].get("attribute", "ID"),
+    shell:
+        """
+        python3 workflow/scripts/check_count_annotation_overlap.py --counts {input.counts} --annotation {input.annotation} --feature-type {params.feature_type} --attribute {params.attribute} --output {output} 2> {log}
+        """
+
+
 rule deseq2:
     input:
         counts=get_quant_method,
         metadata=config["metadata"],
-        multiqc=rules.multiqc.output,
+        annotation_overlap=rules.count_annotation_overlap.output,
     output:
         diffexp="results/{project}/differential_expression/{project}.tsv",
-        plot="results/{project}/differential_expression/{project}.png",
-        plot_svg="results/{project}/differential_expression/{project}.svg",
-        plot_pdf="results/{project}/differential_expression/{project}.pdf",
-        volcano_plot="results/{project}/differential_expression/{project}_volcano_plot.png",
-        volcano_plot_svg="results/{project}/differential_expression/{project}_volcano_plot.svg",
-        expression_boxplot="results/{project}/differential_expression/{project}_normalized_expression_boxplot.png",
-        expression_boxplot_svg="results/{project}/differential_expression/{project}_normalized_expression_boxplot.svg",
-        expression_boxplot_pdf="results/{project}/differential_expression/{project}_normalized_expression_boxplot.pdf",
-        expression_density="results/{project}/differential_expression/{project}_normalized_expression_density.png",
-        expression_density_svg="results/{project}/differential_expression/{project}_normalized_expression_density.svg",
-        expression_density_pdf="results/{project}/differential_expression/{project}_normalized_expression_density.pdf",
-        sample_distance_heatmap="results/{project}/differential_expression/{project}_sample_distance_heatmap.png",
-        sample_distance_heatmap_svg="results/{project}/differential_expression/{project}_sample_distance_heatmap.svg",
-        pca="results/{project}/differential_expression/{project}_pca.png",
-        pca_svg="results/{project}/differential_expression/{project}_pca.svg",
-        library_size_factors="results/{project}/differential_expression/{project}_library_sizes_size_factors.png",
-        library_size_factors_svg="results/{project}/differential_expression/{project}_library_sizes_size_factors.svg",
-        ma_plot="results/{project}/differential_expression/{project}_ma_plot.png",
-        ma_plot_svg="results/{project}/differential_expression/{project}_ma_plot.svg",
     log:
-        "logs/{project}/differential_expression/deseq2.log",
+        "logs/{project}/differential_expression/deseq2/results.log",
     conda:
         "../envs/DESeq2.yml"
     params:
-        design_formula=config["deseq2"].get(
-            "design_formula", f"~ {config['deseq2']['variable_to_analyze']}"
-        ),
-        reference_in_variable=config["deseq2"]["reference_in_variable"],
-        variable_to_analyze=config["deseq2"]["variable_to_analyze"],
-        log2fc_threshold=config["deseq2"].get("log2fc_threshold", 0.6),
-        padj_threshold=config["deseq2"].get("padj_threshold", 0.05),
-        label_top_n=config["deseq2"].get("label_top_n", 10),
+        **deseq_common_params(config)
     shell:
         """
-        Rscript workflow/scripts/DESeq.R --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.diffexp} --plot_path {output.plot} --plot_svg_path {output.plot_svg} --plot_pdf_path {output.plot_pdf} --volcano_plot_path {output.volcano_plot} --volcano_plot_svg_path {output.volcano_plot_svg} --expression_boxplot_path {output.expression_boxplot} --expression_boxplot_svg_path {output.expression_boxplot_svg} --expression_boxplot_pdf_path {output.expression_boxplot_pdf} --expression_density_path {output.expression_density} --expression_density_svg_path {output.expression_density_svg} --expression_density_pdf_path {output.expression_density_pdf} --sample_distance_heatmap_path {output.sample_distance_heatmap} --sample_distance_heatmap_svg_path {output.sample_distance_heatmap_svg} --pca_path {output.pca} --pca_svg_path {output.pca_svg} --library_size_factors_path {output.library_size_factors} --library_size_factors_svg_path {output.library_size_factors_svg} --ma_plot_path {output.ma_plot} --ma_plot_svg_path {output.ma_plot_svg} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        Rscript workflow/scripts/DESeq.R --mode results --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.diffexp} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        """
+
+
+rule deseq2_volcano_plot:
+    input:
+        counts=get_quant_method,
+        metadata=config["metadata"],
+        diffexp=rules.deseq2.output.diffexp,
+    output:
+        png="results/{project}/differential_expression/{project}_volcano_plot.png",
+        svg="results/{project}/differential_expression/{project}_volcano_plot.svg",
+    log:
+        "logs/{project}/differential_expression/deseq2/volcano_plot.log",
+    conda:
+        "../envs/DESeq2.yml"
+    params:
+        **deseq_common_params(config)
+    shell:
+        """
+        Rscript workflow/scripts/DESeq.R --mode volcano --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.png} --svg_file {output.svg} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        """
+
+
+rule deseq2_ma_plot:
+    input:
+        counts=get_quant_method,
+        metadata=config["metadata"],
+        diffexp=rules.deseq2.output.diffexp,
+    output:
+        png="results/{project}/differential_expression/{project}_ma_plot.png",
+        svg="results/{project}/differential_expression/{project}_ma_plot.svg",
+    log:
+        "logs/{project}/differential_expression/deseq2/ma_plot.log",
+    conda:
+        "../envs/DESeq2.yml"
+    params:
+        **deseq_common_params(config)
+    shell:
+        """
+        Rscript workflow/scripts/DESeq.R --mode ma --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.png} --svg_file {output.svg} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        """
+
+
+rule deseq2_expression_boxplot:
+    input:
+        counts=get_quant_method,
+        metadata=config["metadata"],
+        diffexp=rules.deseq2.output.diffexp,
+    output:
+        png="results/{project}/differential_expression/{project}_normalized_expression_boxplot.png",
+        svg="results/{project}/differential_expression/{project}_normalized_expression_boxplot.svg",
+        pdf="results/{project}/differential_expression/{project}_normalized_expression_boxplot.pdf",
+    log:
+        "logs/{project}/differential_expression/deseq2/normalized_expression_boxplot.log",
+    conda:
+        "../envs/DESeq2.yml"
+    params:
+        **deseq_common_params(config)
+    shell:
+        """
+        Rscript workflow/scripts/DESeq.R --mode expression_boxplot --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.png} --svg_file {output.svg} --pdf_file {output.pdf} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        """
+
+
+rule deseq2_expression_density:
+    input:
+        counts=get_quant_method,
+        metadata=config["metadata"],
+        diffexp=rules.deseq2.output.diffexp,
+    output:
+        png="results/{project}/differential_expression/{project}_normalized_expression_density.png",
+        svg="results/{project}/differential_expression/{project}_normalized_expression_density.svg",
+        pdf="results/{project}/differential_expression/{project}_normalized_expression_density.pdf",
+    log:
+        "logs/{project}/differential_expression/deseq2/normalized_expression_density.log",
+    conda:
+        "../envs/DESeq2.yml"
+    params:
+        **deseq_common_params(config)
+    shell:
+        """
+        Rscript workflow/scripts/DESeq.R --mode expression_density --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.png} --svg_file {output.svg} --pdf_file {output.pdf} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        """
+
+
+rule deseq2_sample_distance_heatmap:
+    input:
+        counts=get_quant_method,
+        metadata=config["metadata"],
+        diffexp=rules.deseq2.output.diffexp,
+    output:
+        png="results/{project}/differential_expression/{project}_sample_distance_heatmap.png",
+        svg="results/{project}/differential_expression/{project}_sample_distance_heatmap.svg",
+    log:
+        "logs/{project}/differential_expression/deseq2/sample_distance_heatmap.log",
+    conda:
+        "../envs/DESeq2.yml"
+    params:
+        **deseq_common_params(config)
+    shell:
+        """
+        Rscript workflow/scripts/DESeq.R --mode sample_distance_heatmap --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.png} --svg_file {output.svg} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        """
+
+
+rule deseq2_pca:
+    input:
+        counts=get_quant_method,
+        metadata=config["metadata"],
+        diffexp=rules.deseq2.output.diffexp,
+    output:
+        png="results/{project}/differential_expression/{project}_pca.png",
+        svg="results/{project}/differential_expression/{project}_pca.svg",
+    log:
+        "logs/{project}/differential_expression/deseq2/pca.log",
+    conda:
+        "../envs/DESeq2.yml"
+    params:
+        **deseq_common_params(config)
+    shell:
+        """
+        Rscript workflow/scripts/DESeq.R --mode pca --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.png} --svg_file {output.svg} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        """
+
+
+rule deseq2_library_size_factors:
+    input:
+        counts=get_quant_method,
+        metadata=config["metadata"],
+        diffexp=rules.deseq2.output.diffexp,
+    output:
+        png="results/{project}/differential_expression/{project}_library_sizes_size_factors.png",
+        svg="results/{project}/differential_expression/{project}_library_sizes_size_factors.svg",
+    log:
+        "logs/{project}/differential_expression/deseq2/library_sizes_size_factors.log",
+    conda:
+        "../envs/DESeq2.yml"
+    params:
+        **deseq_common_params(config)
+    shell:
+        """
+        Rscript workflow/scripts/DESeq.R --mode library_size_factors --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.png} --svg_file {output.svg} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
         """

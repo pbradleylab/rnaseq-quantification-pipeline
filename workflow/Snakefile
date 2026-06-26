@@ -30,6 +30,38 @@ rule all:
             rules.deseq2.output, project=pep.sample_table.project.unique().tolist()
         ),
         expand(
+            rules.count_annotation_overlap.output,
+            project=pep.sample_table.project.unique().tolist(),
+        ),
+        expand(
+            rules.deseq2_volcano_plot.output,
+            project=pep.sample_table.project.unique().tolist(),
+        ),
+        expand(
+            rules.deseq2_ma_plot.output,
+            project=pep.sample_table.project.unique().tolist(),
+        ),
+        expand(
+            rules.deseq2_expression_boxplot.output,
+            project=pep.sample_table.project.unique().tolist(),
+        ),
+        expand(
+            rules.deseq2_expression_density.output,
+            project=pep.sample_table.project.unique().tolist(),
+        ),
+        expand(
+            rules.deseq2_sample_distance_heatmap.output,
+            project=pep.sample_table.project.unique().tolist(),
+        ),
+        expand(
+            rules.deseq2_pca.output,
+            project=pep.sample_table.project.unique().tolist(),
+        ),
+        expand(
+            rules.deseq2_library_size_factors.output,
+            project=pep.sample_table.project.unique().tolist(),
+        ),
+        expand(
             rules.qc_summary.output[0],
             project=pep.sample_table.project.unique().tolist(),
         ),

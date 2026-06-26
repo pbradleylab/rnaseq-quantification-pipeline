@@ -15,8 +15,8 @@ inside `workflow/`.
   per-sample QC summary.
 - `rules/quantification.smk`: runs Kallisto, STAR, or FeatureCounts
   quantification and merges per-sample outputs.
-- `rules/deseq.smk`: runs DESeq2 and writes differential-expression tables and
-  plots.
+- `rules/deseq.smk`: runs DESeq2 and writes differential-expression tables plus
+  independent plot outputs under the differential-expression results directory.
 
 ## Script Helpers
 
@@ -28,17 +28,31 @@ inside `workflow/`.
 - `scripts/combine_kallisto.py`: merges Kallisto `abundance.tsv` files from
   paired-end and single-end output directories.
 - `scripts/summarize_qc.py`: builds the final per-sample QC table.
-- `scripts/DESeq.R`: runs DESeq2 and generates result tables plus PNG, SVG, and
-  PDF plots.
+- `scripts/check_count_annotation_overlap.py`: compares count-matrix
+  `target_id` values with configured annotation feature IDs before DESeq2 runs.
+- `scripts/DESeq.R`: runs DESeq2 in a selected mode to generate the result
+  table, volcano plot, MA plot, normalized expression plots, sample distance
+  heatmap, PCA plot, or library size and size-factor plot.
 
 ## Important Outputs
 
 - `results/{project}/final/multiqc/multiqc_report.html`
 - `results/{project}/final/qc/{project}_sample_qc_summary.tsv`
+- `results/{project}/final/qc/{project}_count_annotation_overlap.tsv`
 - `results/{project}/final/quantification/star/gene_counts_all_samples.tsv`
 - `results/{project}/final/quantification/featurecounts/gene_counts_all_samples.tsv`
 - `results/{project}/final/quantification/kallisto/transcript_counts_all_samples.tsv`
 - `results/{project}/differential_expression/{project}.tsv`
+- `results/{project}/differential_expression/{project}_volcano_plot.png`
+- `results/{project}/differential_expression/{project}_volcano_plot.svg`
+- `results/{project}/differential_expression/{project}_ma_plot.png`
+- `results/{project}/differential_expression/{project}_ma_plot.svg`
+- `results/{project}/differential_expression/{project}_sample_distance_heatmap.png`
+- `results/{project}/differential_expression/{project}_sample_distance_heatmap.svg`
+- `results/{project}/differential_expression/{project}_pca.png`
+- `results/{project}/differential_expression/{project}_pca.svg`
+- `results/{project}/differential_expression/{project}_library_sizes_size_factors.png`
+- `results/{project}/differential_expression/{project}_library_sizes_size_factors.svg`
 
 ## Development Checks
 

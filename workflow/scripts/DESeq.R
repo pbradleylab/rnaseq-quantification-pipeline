@@ -33,6 +33,10 @@ option_list = list(
                         type="character", default="normalized_expression_density.svg"),
         make_option(c("--expression_density_pdf_path"),
                         type="character", default="normalized_expression_density.pdf"),
+        make_option(c("--sample_distance_heatmap_path"),
+                        type="character", default="sample_distance_heatmap.png"),
+        make_option(c("--sample_distance_heatmap_svg_path"),
+                        type="character", default="sample_distance_heatmap.svg"),
         make_option(c("--log2fc_threshold"),
                         type="double", default=0.6),
         make_option(c("--padj_threshold"),
@@ -53,6 +57,8 @@ dir.create(dirname(opt$expression_boxplot_pdf_path), recursive=TRUE, showWarning
 dir.create(dirname(opt$expression_density_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$expression_density_svg_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$expression_density_pdf_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$sample_distance_heatmap_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$sample_distance_heatmap_svg_path), recursive=TRUE, showWarnings=FALSE)
 
 #Assign a variable to both files
 count_data = read.csv(opt$counts_data, header = TRUE, sep = "\t", check.names = FALSE)
@@ -228,3 +234,49 @@ save_plot(
     opt$expression_density_svg_path,
     opt$expression_density_pdf_path
 )
+
+vsd = if (nrow(dds) < 1000) {
+    varianceStabilizingTransformation(dds, blind=FALSE)
+} else {
+    vst(dds, blind=FALSE)
+}
+sample_distances = as.matrix(dist(t(assay(vsd))))
+sample_distance_df = as.data.frame(as.table(sample_distances))
+colnames(sample_distance_df) = c("sample_a", "sample_b", "distance")
+sample_distance_df$sample_a = factor(
+    sample_distance_df$sample_a,
+    levels=colnames(sample_distances)
+)
+sample_distance_df$sample_b = factor(
+    sample_distance_df$sample_b,
+    levels=rev(colnames(sample_distances))
+)
+
+sample_distance_heatmap = ggplot(
+    sample_distance_df,
+    aes(x=sample_a, y=sample_b, fill=distance)
+) +
+    geom_tile(color="white", linewidth=0.2) +
+    coord_fixed() +
+    scale_fill_gradient(low="#F7FBFF", high="#08306B") +
+    theme_minimal() +
+    theme(
+        axis.text.x=element_text(angle=45, hjust=1),
+        panel.grid=element_blank()
+    ) +
+    labs(
+        x=NULL,
+        y=NULL,
+        fill="distance"
+    )
+
+ggsave(
+    opt$sample_distance_heatmap_path,
+    plot=sample_distance_heatmap,
+    width=7,
+    height=6,
+    dpi=300
+)
+svg(opt$sample_distance_heatmap_svg_path, width=7, height=6)
+print(sample_distance_heatmap)
+dev.off()

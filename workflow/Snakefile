@@ -27,7 +27,7 @@ include: "rules/deseq.smk"
 rule all:
     input:
         expand(
-            rules.deseq2.output[0], project=pep.sample_table.project.unique().tolist()
+            rules.deseq2.output, project=pep.sample_table.project.unique().tolist()
         ),
         expand(
             rules.qc_summary.output[0],

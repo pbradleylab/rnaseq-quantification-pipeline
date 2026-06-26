@@ -82,8 +82,10 @@ When `quantification_tool` is set to `featurecounts`, the workflow can:
 
 - Align paired-end and single-end reads with STAR.
 - Run FeatureCounts on the resulting BAM files.
-- Count configurable annotation features such as `exon` or `CDS`.
-- Use a configurable annotation attribute such as `gene_id`.
+- Count configurable annotation features. The default is `gene`, which fits
+  bacterial-style GFF files.
+- Use a configurable annotation attribute. The default is `ID`, which matches
+  common bacterial GFF gene records.
 - Support unstranded, stranded, and reversely stranded counting through the
   FeatureCounts `-s` setting.
 - Merge per-sample FeatureCounts outputs into
@@ -316,10 +318,11 @@ FeatureCounts options:
 - `featurecounts.mem`: memory reserved by Snakemake.
 - `featurecounts.strandedness`: FeatureCounts `-s` value. Use `0` for
   unstranded, `1` for stranded, or `2` for reversely stranded.
-- `featurecounts.feature_type`: annotation feature type passed with `-t`, for
-  example `exon` or `CDS`.
-- `featurecounts.attribute`: annotation attribute passed with `-g`, for example
-  `gene_id`.
+- `featurecounts.feature_type`: annotation feature type passed with `-t`.
+  Defaults to `gene` for bacterial-style GFF files. Use `CDS` if you want
+  coding-sequence-level assignment instead.
+- `featurecounts.attribute`: annotation attribute passed with `-g`. Defaults to
+  `ID` for bacterial-style GFF gene records.
 - `featurecounts.extra`: additional FeatureCounts arguments.
 
 QC and report options:

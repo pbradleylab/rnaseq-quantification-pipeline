@@ -258,8 +258,8 @@ rule featurecounts:
     params:
         paired="-p",
         strandedness=config["featurecounts"].get("strandedness", 0),
-        feature_type=config["featurecounts"].get("feature_type", "exon"),
-        attribute=config["featurecounts"].get("attribute", "gene_id"),
+        feature_type=config["featurecounts"].get("feature_type", "gene"),
+        attribute=config["featurecounts"].get("attribute", "ID"),
         extra=config["featurecounts"].get("extra", ""),
     shell:
         """
@@ -285,8 +285,8 @@ rule featurecounts_single:
         mem_mb=config["featurecounts"]["mem"],
     params:
         strandedness=config["featurecounts"].get("strandedness", 0),
-        feature_type=config["featurecounts"].get("feature_type", "exon"),
-        attribute=config["featurecounts"].get("attribute", "gene_id"),
+        feature_type=config["featurecounts"].get("feature_type", "gene"),
+        attribute=config["featurecounts"].get("attribute", "ID"),
         extra=config["featurecounts"].get("extra", ""),
     shell:
         """

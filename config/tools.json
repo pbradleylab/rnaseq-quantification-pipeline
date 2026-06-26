@@ -35,8 +35,8 @@
         "mem": 1024,
         "threads": 8,
         "strandedness": 0,
-        "feature_type": "exon",
-        "attribute": "gene_id",
+        "feature_type": "gene",
+        "attribute": "ID",
         "extra": ""
     },
     "gunc": {

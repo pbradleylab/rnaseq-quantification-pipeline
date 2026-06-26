@@ -39,9 +39,9 @@ rule count_annotation_overlap:
         counts=get_quant_method,
         annotation=get_annotation,
     output:
-        "results/{project}/count_annotation_overlap/{project}_count_annotation_overlap.tsv",
+        "results/{project}/reports/count_annotation_overlap/{project}_count_annotation_overlap.tsv",
     log:
-        "logs/{project}/count_annotation_overlap/count_annotation_overlap.log",
+        "logs/{project}/reports/count_annotation_overlap/count_annotation_overlap.log",
     params:
         feature_type=config["featurecounts"].get("feature_type", "gene"),
         attribute=config["featurecounts"].get("attribute", "ID"),
@@ -56,9 +56,9 @@ rule gene_biotype_count_summary:
         counts=get_quant_method,
         annotation=get_annotation,
     output:
-        "results/{project}/gene_biotype_count_summary/{project}_gene_biotype_count_summary.tsv",
+        "results/{project}/reports/gene_biotype_count_summary/{project}_gene_biotype_count_summary.tsv",
     log:
-        "logs/{project}/gene_biotype_count_summary/gene_biotype_count_summary.log",
+        "logs/{project}/reports/gene_biotype_count_summary/gene_biotype_count_summary.log",
     params:
         feature_type=config["featurecounts"].get("feature_type", "gene"),
         attribute=config["featurecounts"].get("attribute", "ID"),
@@ -74,7 +74,7 @@ rule deseq2:
         metadata=config["metadata"],
         annotation_overlap=rules.count_annotation_overlap.output,
     output:
-        diffexp="results/{project}/deseq2/{project}.tsv",
+        diffexp="results/{project}/differential_expression/deseq2/{project}.tsv",
     log:
         "logs/{project}/deseq2/results.log",
     conda:
@@ -93,11 +93,11 @@ rule deseq2_significant_gene_tables:
         metadata=config["metadata"],
         diffexp=rules.deseq2.output.diffexp,
     output:
-        all="results/{project}/significant_gene_tables/{project}_significant_genes.tsv",
-        up="results/{project}/significant_gene_tables/{project}_significant_upregulated_genes.tsv",
-        down="results/{project}/significant_gene_tables/{project}_significant_downregulated_genes.tsv",
+        all="results/{project}/differential_expression/significant_gene_tables/{project}_significant_genes.tsv",
+        up="results/{project}/differential_expression/significant_gene_tables/{project}_significant_upregulated_genes.tsv",
+        down="results/{project}/differential_expression/significant_gene_tables/{project}_significant_downregulated_genes.tsv",
     log:
-        "logs/{project}/significant_gene_tables/significant_gene_tables.log",
+        "logs/{project}/differential_expression/significant_gene_tables/significant_gene_tables.log",
     conda:
         "../envs/DESeq2.yml"
     params:
@@ -114,10 +114,10 @@ rule deseq2_volcano_plot:
         metadata=config["metadata"],
         diffexp=rules.deseq2.output.diffexp,
     output:
-        png="results/{project}/volcano_plot/{project}_volcano_plot.png",
-        svg="results/{project}/volcano_plot/{project}_volcano_plot.svg",
+        png="results/{project}/differential_expression/volcano_plot/{project}_volcano_plot.png",
+        svg="results/{project}/differential_expression/volcano_plot/{project}_volcano_plot.svg",
     log:
-        "logs/{project}/volcano_plot/volcano_plot.log",
+        "logs/{project}/differential_expression/volcano_plot/volcano_plot.log",
     conda:
         "../envs/DESeq2.yml"
     params:
@@ -134,9 +134,9 @@ rule deseq2_normalized_counts:
         metadata=config["metadata"],
         diffexp=rules.deseq2.output.diffexp,
     output:
-        "results/{project}/normalized_counts/{project}_normalized_counts.tsv",
+        "results/{project}/differential_expression/normalized_counts/{project}_normalized_counts.tsv",
     log:
-        "logs/{project}/normalized_counts/normalized_counts.log",
+        "logs/{project}/differential_expression/normalized_counts/normalized_counts.log",
     conda:
         "../envs/DESeq2.yml"
     params:
@@ -153,9 +153,9 @@ rule deseq2_transformed_counts:
         metadata=config["metadata"],
         diffexp=rules.deseq2.output.diffexp,
     output:
-        "results/{project}/transformed_counts/{project}_transformed_counts.tsv",
+        "results/{project}/differential_expression/transformed_counts/{project}_transformed_counts.tsv",
     log:
-        "logs/{project}/transformed_counts/transformed_counts.log",
+        "logs/{project}/differential_expression/transformed_counts/transformed_counts.log",
     conda:
         "../envs/DESeq2.yml"
     params:
@@ -172,10 +172,10 @@ rule deseq2_cooks_reports:
         metadata=config["metadata"],
         diffexp=rules.deseq2.output.diffexp,
     output:
-        gene="results/{project}/cooks_reports/{project}_cooks_gene_report.tsv",
-        sample="results/{project}/cooks_reports/{project}_cooks_sample_report.tsv",
+        gene="results/{project}/differential_expression/cooks_reports/{project}_cooks_gene_report.tsv",
+        sample="results/{project}/differential_expression/cooks_reports/{project}_cooks_sample_report.tsv",
     log:
-        "logs/{project}/cooks_reports/cooks_reports.log",
+        "logs/{project}/differential_expression/cooks_reports/cooks_reports.log",
     conda:
         "../envs/DESeq2.yml"
     params:
@@ -192,10 +192,10 @@ rule deseq2_ma_plot:
         metadata=config["metadata"],
         diffexp=rules.deseq2.output.diffexp,
     output:
-        png="results/{project}/ma_plot/{project}_ma_plot.png",
-        svg="results/{project}/ma_plot/{project}_ma_plot.svg",
+        png="results/{project}/differential_expression/ma_plot/{project}_ma_plot.png",
+        svg="results/{project}/differential_expression/ma_plot/{project}_ma_plot.svg",
     log:
-        "logs/{project}/ma_plot/ma_plot.log",
+        "logs/{project}/differential_expression/ma_plot/ma_plot.log",
     conda:
         "../envs/DESeq2.yml"
     params:
@@ -212,11 +212,11 @@ rule deseq2_expression_boxplot:
         metadata=config["metadata"],
         diffexp=rules.deseq2.output.diffexp,
     output:
-        png="results/{project}/normalized_expression_boxplot/{project}_normalized_expression_boxplot.png",
-        svg="results/{project}/normalized_expression_boxplot/{project}_normalized_expression_boxplot.svg",
-        pdf="results/{project}/normalized_expression_boxplot/{project}_normalized_expression_boxplot.pdf",
+        png="results/{project}/differential_expression/normalized_expression_boxplot/{project}_normalized_expression_boxplot.png",
+        svg="results/{project}/differential_expression/normalized_expression_boxplot/{project}_normalized_expression_boxplot.svg",
+        pdf="results/{project}/differential_expression/normalized_expression_boxplot/{project}_normalized_expression_boxplot.pdf",
     log:
-        "logs/{project}/normalized_expression_boxplot/normalized_expression_boxplot.log",
+        "logs/{project}/differential_expression/normalized_expression_boxplot/normalized_expression_boxplot.log",
     conda:
         "../envs/DESeq2.yml"
     params:
@@ -233,11 +233,11 @@ rule deseq2_expression_density:
         metadata=config["metadata"],
         diffexp=rules.deseq2.output.diffexp,
     output:
-        png="results/{project}/normalized_expression_density/{project}_normalized_expression_density.png",
-        svg="results/{project}/normalized_expression_density/{project}_normalized_expression_density.svg",
-        pdf="results/{project}/normalized_expression_density/{project}_normalized_expression_density.pdf",
+        png="results/{project}/differential_expression/normalized_expression_density/{project}_normalized_expression_density.png",
+        svg="results/{project}/differential_expression/normalized_expression_density/{project}_normalized_expression_density.svg",
+        pdf="results/{project}/differential_expression/normalized_expression_density/{project}_normalized_expression_density.pdf",
     log:
-        "logs/{project}/normalized_expression_density/normalized_expression_density.log",
+        "logs/{project}/differential_expression/normalized_expression_density/normalized_expression_density.log",
     conda:
         "../envs/DESeq2.yml"
     params:
@@ -254,10 +254,10 @@ rule deseq2_sample_distance_heatmap:
         metadata=config["metadata"],
         diffexp=rules.deseq2.output.diffexp,
     output:
-        png="results/{project}/sample_distance_heatmap/{project}_sample_distance_heatmap.png",
-        svg="results/{project}/sample_distance_heatmap/{project}_sample_distance_heatmap.svg",
+        png="results/{project}/differential_expression/sample_distance_heatmap/{project}_sample_distance_heatmap.png",
+        svg="results/{project}/differential_expression/sample_distance_heatmap/{project}_sample_distance_heatmap.svg",
     log:
-        "logs/{project}/sample_distance_heatmap/sample_distance_heatmap.log",
+        "logs/{project}/differential_expression/sample_distance_heatmap/sample_distance_heatmap.log",
     conda:
         "../envs/DESeq2.yml"
     params:
@@ -274,10 +274,10 @@ rule deseq2_pca:
         metadata=config["metadata"],
         diffexp=rules.deseq2.output.diffexp,
     output:
-        png="results/{project}/pca/{project}_pca.png",
-        svg="results/{project}/pca/{project}_pca.svg",
+        png="results/{project}/differential_expression/pca/{project}_pca.png",
+        svg="results/{project}/differential_expression/pca/{project}_pca.svg",
     log:
-        "logs/{project}/pca/pca.log",
+        "logs/{project}/differential_expression/pca/pca.log",
     conda:
         "../envs/DESeq2.yml"
     params:
@@ -294,10 +294,10 @@ rule deseq2_library_size_factors:
         metadata=config["metadata"],
         diffexp=rules.deseq2.output.diffexp,
     output:
-        png="results/{project}/library_sizes_size_factors/{project}_library_sizes_size_factors.png",
-        svg="results/{project}/library_sizes_size_factors/{project}_library_sizes_size_factors.svg",
+        png="results/{project}/differential_expression/library_sizes_size_factors/{project}_library_sizes_size_factors.png",
+        svg="results/{project}/differential_expression/library_sizes_size_factors/{project}_library_sizes_size_factors.svg",
     log:
-        "logs/{project}/library_sizes_size_factors/library_sizes_size_factors.log",
+        "logs/{project}/differential_expression/library_sizes_size_factors/library_sizes_size_factors.log",
     conda:
         "../envs/DESeq2.yml"
     params:

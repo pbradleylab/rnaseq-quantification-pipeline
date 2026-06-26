@@ -178,6 +178,8 @@ For each project, final outputs are written under `results/{project}/`.
 - `differential_expression/{project}_pca.svg`
 - `differential_expression/{project}_library_sizes_size_factors.png`
 - `differential_expression/{project}_library_sizes_size_factors.svg`
+- `differential_expression/{project}_ma_plot.png`
+- `differential_expression/{project}_ma_plot.svg`
 
 Intermediate outputs are written under `resources/`, `results/{project}/`, and
 `logs/`. Snakemake-managed Conda environments are written under `.snakemake/`.
@@ -433,7 +435,7 @@ Current behavior:
 - Plots are generated for the configured DESeq2 comparison.
 
 Common extensions that are not currently implemented include multi-factor
-design formulas, explicit contrast tables, and MA plots.
+design formulas and explicit contrast tables.
 
 ## Common Problems
 

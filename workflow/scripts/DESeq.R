@@ -45,6 +45,10 @@ option_list = list(
                         type="character", default="library_sizes_size_factors.png"),
         make_option(c("--library_size_factors_svg_path"),
                         type="character", default="library_sizes_size_factors.svg"),
+        make_option(c("--ma_plot_path"),
+                        type="character", default="ma_plot.png"),
+        make_option(c("--ma_plot_svg_path"),
+                        type="character", default="ma_plot.svg"),
         make_option(c("--log2fc_threshold"),
                         type="double", default=0.6),
         make_option(c("--padj_threshold"),
@@ -71,6 +75,8 @@ dir.create(dirname(opt$pca_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$pca_svg_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$library_size_factors_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$library_size_factors_svg_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$ma_plot_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$ma_plot_svg_path), recursive=TRUE, showWarnings=FALSE)
 
 #Assign a variable to both files
 count_data = read.csv(opt$counts_data, header = TRUE, sep = "\t", check.names = FALSE)
@@ -192,6 +198,33 @@ plot = ggplot(df, aes(x=log2FoldChange, y=padj_plot, color=status)) +
     )
 
 save_plot(plot, opt$plot_path, opt$plot_svg_path, opt$plot_pdf_path)
+
+ma_plot = ggplot(
+    df,
+    aes(x=baseMean, y=log2FoldChange, color=status)
+) +
+    geom_point(alpha=0.75, na.rm=TRUE) +
+    scale_x_log10() +
+    scale_color_manual(values=c("Down"="#2C7BB6", "Not significant"="#595959", "Up"="#D7191C")) +
+    geom_hline(yintercept=c(-opt$log2fc_threshold, opt$log2fc_threshold), col="#D7191C", linetype="dashed") +
+    geom_hline(yintercept=0, col="#595959", linetype="dotted") +
+    theme_minimal() +
+    labs(
+        x="mean normalized expression",
+        y="log2 fold change",
+        color=NULL
+    )
+
+ggsave(
+    opt$ma_plot_path,
+    plot=ma_plot,
+    width=7,
+    height=5,
+    dpi=300
+)
+svg(opt$ma_plot_svg_path, width=7, height=5)
+print(ma_plot)
+dev.off()
 
 normalized_counts = counts(dds, normalized=TRUE)
 normalized_df = as.data.frame(normalized_counts) %>%

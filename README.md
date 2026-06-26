@@ -343,6 +343,8 @@ DESeq2 options:
 - `deseq2.log2fc_threshold`: volcano plot fold-change threshold.
 - `deseq2.padj_threshold`: adjusted p-value threshold.
 - `deseq2.label_top_n`: number of top genes to label on the volcano plot.
+- `deseq2.min_replicates_per_condition`: minimum biological replicates expected
+  per condition before the workflow emits a DESeq2 interpretation warning.
 
 ## Running The Workflow
 
@@ -417,13 +419,16 @@ Current behavior:
 - One metadata variable is used in the DESeq2 design.
 - One configured reference level is used for the DESeq2 comparison.
 - Count and metadata sample IDs must match exactly.
+- Conditions with fewer than the configured minimum biological replicate count
+  emit a preflight warning. This does not stop the workflow because DESeq2 can
+  still run, but interpretation is weak.
 - Kallisto transcript counts are passed into the same DESeq2 entry point as the
   gene count matrices.
 - Plots are generated for the configured DESeq2 comparison.
 
 Common extensions that are not currently implemented include multi-factor
 design formulas, explicit contrast tables, PCA plots, sample distance heatmaps,
-MA plots, and automated replicate checks.
+and MA plots.
 
 ## Common Problems
 

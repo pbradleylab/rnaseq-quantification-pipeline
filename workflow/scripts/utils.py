@@ -1,4 +1,5 @@
 import csv
+import sys
 from pathlib import Path
 
 
@@ -30,6 +31,10 @@ def read_deseq_metadata(path):
         rows = list(reader)
         columns = reader.fieldnames or []
     return rows, columns
+
+
+def warn_preflight(message):
+    print(f"WARNING: {message}", file=sys.stderr)
 
 
 def validate_preflight_inputs(pep, config):
@@ -74,6 +79,13 @@ def validate_preflight_inputs(pep, config):
     deseq_config = config.get("deseq2", {})
     variable_to_analyze = deseq_config.get("variable_to_analyze")
     reference_in_variable = deseq_config.get("reference_in_variable")
+    try:
+        min_replicates = int(deseq_config.get("min_replicates_per_condition", 2))
+    except (TypeError, ValueError):
+        min_replicates = 2
+        errors.append("deseq2.min_replicates_per_condition must be an integer.")
+    if min_replicates < 1:
+        errors.append("deseq2.min_replicates_per_condition must be at least 1.")
     if not variable_to_analyze:
         errors.append("config/tools.json must define deseq2.variable_to_analyze.")
     elif metadata_columns and variable_to_analyze not in metadata_columns:
@@ -82,11 +94,13 @@ def validate_preflight_inputs(pep, config):
         )
 
     if variable_to_analyze in metadata_columns:
-        levels = {
-            row.get(variable_to_analyze, "").strip()
-            for row in metadata_rows
-            if row.get(variable_to_analyze, "").strip()
-        }
+        level_counts = {}
+        for row in metadata_rows:
+            level = row.get(variable_to_analyze, "").strip()
+            sample = row.get(sample_id_col, "").strip() if sample_id_col else ""
+            if level and sample:
+                level_counts[level] = level_counts.get(level, 0) + 1
+        levels = set(level_counts)
         if len(levels) < 2:
             errors.append(
                 f"DESeq2 condition column '{variable_to_analyze}' must contain "
@@ -99,6 +113,22 @@ def validate_preflight_inputs(pep, config):
                 f"DESeq2 reference level '{reference_in_variable}' is not present in "
                 f"metadata column '{variable_to_analyze}'. Observed levels: "
                 f"{_format_list(levels)}"
+            )
+        low_replicate_levels = {
+            level: count
+            for level, count in level_counts.items()
+            if count < min_replicates
+        }
+        if low_replicate_levels:
+            level_summary = ", ".join(
+                f"{level}={count}"
+                for level, count in sorted(low_replicate_levels.items())
+            )
+            warn_preflight(
+                f"DESeq2 condition column '{variable_to_analyze}' has fewer "
+                f"than {min_replicates} biological replicates for at least one "
+                f"condition ({level_summary}). DESeq2 may run, but interpretation "
+                "will be weak."
             )
 
     pep_sample_names = pep.sample_table.sample_name.tolist()

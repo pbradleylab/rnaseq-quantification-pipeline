@@ -48,6 +48,7 @@
         "variable_to_analyze":"Time",
         "log2fc_threshold": 0.6,
         "padj_threshold": 0.05,
-        "label_top_n": 10
+        "label_top_n": 10,
+        "min_replicates_per_condition": 2
     }
 }

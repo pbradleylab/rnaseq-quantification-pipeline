@@ -137,6 +137,10 @@ The workflow runs a basic DESeq2 analysis after quantification. It can:
   `~ batch + Time`.
 - Use a configurable reference level for that variable.
 - Export a DESeq2 result table.
+- Export DESeq2 normalized counts.
+- Export transformed count matrices using `vst`, `rlog`, or automatic
+  selection.
+- Export Cook's distance gene- and sample-level outlier reports.
 - Generate modular DESeq2 plots as independent workflow jobs so one plot
   failure does not prevent unrelated plots from running.
 - Keep DESeq2 plots under `results/{project}/differential_expression/`.
@@ -180,6 +184,14 @@ For each project, final outputs are written under `results/{project}/`.
 - `final/quantification/kallisto/transcript_tpms_all_samples.tsv`: Kallisto
   transcript TPM matrix when `quantification_tool` is `kallisto`.
 - `differential_expression/{project}.tsv`: DESeq2 results table.
+- `differential_expression/{project}_normalized_counts.tsv`: DESeq2
+  size-factor normalized counts.
+- `differential_expression/{project}_transformed_counts.tsv`: transformed
+  counts from the configured DESeq2 transform method.
+- `differential_expression/{project}_cooks_gene_report.tsv`: per-gene Cook's
+  distance summary and outlier flag.
+- `differential_expression/{project}_cooks_sample_report.tsv`: per-sample
+  Cook's distance summary.
 - `differential_expression/{project}_volcano_plot.png`: volcano plot.
 - `differential_expression/{project}_volcano_plot.svg`: volcano plot.
 - `differential_expression/{project}_ma_plot.png`: MA plot.
@@ -373,6 +385,10 @@ DESeq2 options:
 - `deseq2.log2fc_threshold`: volcano plot fold-change threshold.
 - `deseq2.padj_threshold`: adjusted p-value threshold.
 - `deseq2.label_top_n`: number of top genes to label on the volcano plot.
+- `deseq2.transform_method`: transform used for transformed count exports,
+  PCA, and sample distance heatmaps. Supported values are `vst`, `rlog`, and
+  `auto`. The `vst` setting falls back to the full variance-stabilizing
+  transformation for very small matrices.
 - `deseq2.min_replicates_per_condition`: minimum biological replicates expected
   per condition before the workflow emits a DESeq2 interpretation warning.
 
@@ -459,6 +475,8 @@ Current behavior:
   still run, but interpretation is weak.
 - Kallisto transcript counts are passed into the same DESeq2 entry point as the
   gene count matrices.
+- Normalized counts, transformed counts, and Cook's distance outlier reports are
+  exported under `results/{project}/differential_expression/`.
 - DESeq2 plots are separate workflow rules under
   `results/{project}/differential_expression/`, so independent plot outputs can
   be rerun separately after a plot-specific failure.

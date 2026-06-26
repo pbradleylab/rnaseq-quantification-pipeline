@@ -31,7 +31,8 @@ inside `workflow/`.
 - `scripts/check_count_annotation_overlap.py`: compares count-matrix
   `target_id` values with configured annotation feature IDs before DESeq2 runs.
 - `scripts/DESeq.R`: runs DESeq2 in a selected mode to generate the result
-  table, volcano plot, MA plot, normalized expression plots, sample distance
+  table, normalized count matrix, transformed count matrix, Cook's distance
+  reports, volcano plot, MA plot, normalized expression plots, sample distance
   heatmap, PCA plot, or library size and size-factor plot.
 
 ## Important Outputs
@@ -43,6 +44,10 @@ inside `workflow/`.
 - `results/{project}/final/quantification/featurecounts/gene_counts_all_samples.tsv`
 - `results/{project}/final/quantification/kallisto/transcript_counts_all_samples.tsv`
 - `results/{project}/differential_expression/{project}.tsv`
+- `results/{project}/differential_expression/{project}_normalized_counts.tsv`
+- `results/{project}/differential_expression/{project}_transformed_counts.tsv`
+- `results/{project}/differential_expression/{project}_cooks_gene_report.tsv`
+- `results/{project}/differential_expression/{project}_cooks_sample_report.tsv`
 - `results/{project}/differential_expression/{project}_volcano_plot.png`
 - `results/{project}/differential_expression/{project}_volcano_plot.svg`
 - `results/{project}/differential_expression/{project}_ma_plot.png`

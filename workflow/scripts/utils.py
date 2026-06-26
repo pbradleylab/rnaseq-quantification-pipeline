@@ -92,6 +92,9 @@ def validate_preflight_inputs(pep, config):
     variable_to_analyze = deseq_config.get("variable_to_analyze")
     reference_in_variable = deseq_config.get("reference_in_variable")
     design_formula = deseq_config.get("design_formula")
+    transform_method = str(deseq_config.get("transform_method", "vst")).lower()
+    if transform_method not in {"vst", "rlog", "auto"}:
+        errors.append("deseq2.transform_method must be one of: vst, rlog, auto.")
     if not design_formula and variable_to_analyze:
         design_formula = f"~ {variable_to_analyze}"
     if not design_formula:

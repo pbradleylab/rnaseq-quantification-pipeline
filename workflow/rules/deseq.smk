@@ -30,6 +30,7 @@ def deseq_common_params(config):
         "log2fc_threshold": config["deseq2"].get("log2fc_threshold", 0.6),
         "padj_threshold": config["deseq2"].get("padj_threshold", 0.05),
         "label_top_n": config["deseq2"].get("label_top_n", 10),
+        "transform_method": config["deseq2"].get("transform_method", "vst"),
     }
 
 
@@ -86,6 +87,64 @@ rule deseq2_volcano_plot:
     shell:
         """
         Rscript workflow/scripts/DESeq.R --mode volcano --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.png} --svg_file {output.svg} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        """
+
+
+rule deseq2_normalized_counts:
+    input:
+        counts=get_quant_method,
+        metadata=config["metadata"],
+        diffexp=rules.deseq2.output.diffexp,
+    output:
+        "results/{project}/differential_expression/{project}_normalized_counts.tsv",
+    log:
+        "logs/{project}/differential_expression/deseq2/normalized_counts.log",
+    conda:
+        "../envs/DESeq2.yml"
+    params:
+        **deseq_common_params(config)
+    shell:
+        """
+        Rscript workflow/scripts/DESeq.R --mode normalized_counts --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output} --transform_method {params.transform_method} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        """
+
+
+rule deseq2_transformed_counts:
+    input:
+        counts=get_quant_method,
+        metadata=config["metadata"],
+        diffexp=rules.deseq2.output.diffexp,
+    output:
+        "results/{project}/differential_expression/{project}_transformed_counts.tsv",
+    log:
+        "logs/{project}/differential_expression/deseq2/transformed_counts.log",
+    conda:
+        "../envs/DESeq2.yml"
+    params:
+        **deseq_common_params(config)
+    shell:
+        """
+        Rscript workflow/scripts/DESeq.R --mode transformed_counts --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output} --transform_method {params.transform_method} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        """
+
+
+rule deseq2_cooks_reports:
+    input:
+        counts=get_quant_method,
+        metadata=config["metadata"],
+        diffexp=rules.deseq2.output.diffexp,
+    output:
+        gene="results/{project}/differential_expression/{project}_cooks_gene_report.tsv",
+        sample="results/{project}/differential_expression/{project}_cooks_sample_report.tsv",
+    log:
+        "logs/{project}/differential_expression/deseq2/cooks_reports.log",
+    conda:
+        "../envs/DESeq2.yml"
+    params:
+        **deseq_common_params(config)
+    shell:
+        """
+        Rscript workflow/scripts/DESeq.R --mode cooks_report --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.gene} --sample_report_file {output.sample} --transform_method {params.transform_method} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
         """
 
 
@@ -167,7 +226,7 @@ rule deseq2_sample_distance_heatmap:
         **deseq_common_params(config)
     shell:
         """
-        Rscript workflow/scripts/DESeq.R --mode sample_distance_heatmap --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.png} --svg_file {output.svg} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        Rscript workflow/scripts/DESeq.R --mode sample_distance_heatmap --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.png} --svg_file {output.svg} --transform_method {params.transform_method} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
         """
 
 
@@ -187,7 +246,7 @@ rule deseq2_pca:
         **deseq_common_params(config)
     shell:
         """
-        Rscript workflow/scripts/DESeq.R --mode pca --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.png} --svg_file {output.svg} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
+        Rscript workflow/scripts/DESeq.R --mode pca --counts_data {input.counts} --metadata_file {input.metadata} --design_formula {params.design_formula:q} --variable_to_analyze {params.variable_to_analyze} --reference_in_variable {params.reference_in_variable} --output_file {output.png} --svg_file {output.svg} --transform_method {params.transform_method} --log2fc_threshold {params.log2fc_threshold} --padj_threshold {params.padj_threshold} --label_top_n {params.label_top_n} 2> {log}
         """
 
 

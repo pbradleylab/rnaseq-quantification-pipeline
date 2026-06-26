@@ -14,6 +14,8 @@ option_list = list(
     make_option(c("-o", "--output_file"), type="character", default=NULL),
     make_option(c("--svg_file"), type="character", default=NULL),
     make_option(c("--pdf_file"), type="character", default=NULL),
+    make_option(c("--sample_report_file"), type="character", default=NULL),
+    make_option(c("--transform_method"), type="character", default="vst"),
     make_option(c("--log2fc_threshold"), type="double", default=0.6),
     make_option(c("--padj_threshold"), type="double", default=0.05),
     make_option(c("--label_top_n"), type="integer", default=10)
@@ -32,6 +34,9 @@ parse_options = function() {
     }
     if (!is.null(opt$pdf_file)) {
         dir.create(dirname(opt$pdf_file), recursive=TRUE, showWarnings=FALSE)
+    }
+    if (!is.null(opt$sample_report_file)) {
+        dir.create(dirname(opt$sample_report_file), recursive=TRUE, showWarnings=FALSE)
     }
     opt
 }
@@ -151,6 +156,19 @@ save_table = function(res, opt) {
 }
 
 
+save_matrix = function(matrix_data, output_file) {
+    df = as.data.frame(matrix_data, check.names=FALSE) %>%
+        rownames_to_column(var="target_id")
+    write.table(
+        df,
+        file=output_file,
+        sep="\t",
+        quote=FALSE,
+        row.names=FALSE
+    )
+}
+
+
 save_plot = function(plot, opt, width=7, height=5) {
     ggsave(opt$output_file, plot=plot, width=width, height=height, dpi=300)
     if (!is.null(opt$svg_file)) {
@@ -164,11 +182,92 @@ save_plot = function(plot, opt, width=7, height=5) {
 }
 
 
-get_vsd = function(dds) {
+get_transformed_dds = function(dds, opt) {
+    method = tolower(opt$transform_method)
+    if (method == "rlog") {
+        return(rlog(dds, blind=FALSE))
+    }
+    if (method == "auto") {
+        if (ncol(dds) > 30) {
+            method = "vst"
+        } else {
+            return(rlog(dds, blind=FALSE))
+        }
+    }
+    if (method != "vst") {
+        stop(paste("Unsupported transform_method:", opt$transform_method))
+    }
     if (nrow(dds) < 1000) {
         varianceStabilizingTransformation(dds, blind=FALSE)
     } else {
         vst(dds, blind=FALSE)
+    }
+}
+
+
+make_cooks_reports = function(dds, res, opt) {
+    cooks = assays(dds)[["cooks"]]
+    if (is.null(cooks)) {
+        stop("DESeq2 object does not contain a Cook's distance assay.")
+    }
+    model_matrix = model.matrix(design(dds), colData(dds))
+    cooks_cutoff = NA_real_
+    residual_df = ncol(dds) - ncol(model_matrix)
+    if (residual_df > 0) {
+        cooks_cutoff = qf(0.99, ncol(model_matrix), residual_df)
+    }
+    max_cooks = apply(cooks, 1, max, na.rm=TRUE)
+    mean_cooks = rowMeans(cooks, na.rm=TRUE)
+    cooks_outlier = if (is.na(cooks_cutoff)) {
+        rep(NA, length(max_cooks))
+    } else {
+        max_cooks > cooks_cutoff
+    }
+    sample_with_max_cooks = colnames(cooks)[max.col(cooks, ties.method="first")]
+    result_df = as.data.frame(res)
+    gene_report = data.frame(
+        target_id=rownames(cooks),
+        baseMean=result_df[rownames(cooks), "baseMean"],
+        pvalue=result_df[rownames(cooks), "pvalue"],
+        padj=result_df[rownames(cooks), "padj"],
+        max_cooks=max_cooks,
+        mean_cooks=mean_cooks,
+        sample_with_max_cooks=sample_with_max_cooks,
+        cooks_cutoff=cooks_cutoff,
+        cooks_outlier=cooks_outlier,
+        stringsAsFactors=FALSE,
+        check.names=FALSE
+    )
+
+    sample_report = data.frame(
+        sample=colnames(cooks),
+        max_cooks=apply(cooks, 2, max, na.rm=TRUE),
+        mean_cooks=colMeans(cooks, na.rm=TRUE),
+        genes_over_cooks_cutoff=if (is.na(cooks_cutoff)) {
+            NA
+        } else {
+            colSums(cooks > cooks_cutoff, na.rm=TRUE)
+        },
+        cooks_cutoff=cooks_cutoff,
+        stringsAsFactors=FALSE,
+        check.names=FALSE
+    )
+
+    write.table(
+        gene_report[order(gene_report$max_cooks, decreasing=TRUE),],
+        file=opt$output_file,
+        sep="\t",
+        quote=FALSE,
+        row.names=FALSE
+    )
+    if (!is.null(opt$sample_report_file)) {
+        write.table(
+            sample_report[order(sample_report$max_cooks, decreasing=TRUE),],
+            file=opt$sample_report_file,
+            sep="\t",
+            quote=FALSE,
+            row.names=FALSE
+        )
     }
 }
 
@@ -342,6 +441,12 @@ run = function() {
 
     if (opt$mode == "results") {
         save_table(res, opt)
+    } else if (opt$mode == "normalized_counts") {
+        save_matrix(counts(dds, normalized=TRUE), opt$output_file)
+    } else if (opt$mode == "transformed_counts") {
+        save_matrix(assay(get_transformed_dds(dds, opt)), opt$output_file)
+    } else if (opt$mode == "cooks_report") {
+        make_cooks_reports(dds, res, opt)
     } else if (opt$mode == "volcano") {
         save_plot(make_volcano_plot(format_results(res, opt), opt), opt)
     } else if (opt$mode == "ma") {
@@ -351,9 +456,9 @@ run = function() {
     } else if (opt$mode == "expression_density") {
         save_plot(make_expression_density(dds, inputs$metadata, opt), opt)
     } else if (opt$mode == "sample_distance_heatmap") {
-        save_plot(make_sample_distance_heatmap(get_vsd(dds)), opt, width=7, height=6)
+        save_plot(make_sample_distance_heatmap(get_transformed_dds(dds, opt)), opt, width=7, height=6)
     } else if (opt$mode == "pca") {
-        save_plot(make_pca_plot(get_vsd(dds), inputs$metadata, opt), opt)
+        save_plot(make_pca_plot(get_transformed_dds(dds, opt), inputs$metadata, opt), opt)
     } else if (opt$mode == "library_size_factors") {
         save_plot(
             make_library_size_factor_plot(inputs$count_data_mtx, dds, inputs$metadata, opt),

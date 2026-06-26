@@ -34,6 +34,18 @@ rule all:
             project=pep.sample_table.project.unique().tolist(),
         ),
         expand(
+            rules.deseq2_normalized_counts.output,
+            project=pep.sample_table.project.unique().tolist(),
+        ),
+        expand(
+            rules.deseq2_transformed_counts.output,
+            project=pep.sample_table.project.unique().tolist(),
+        ),
+        expand(
+            rules.deseq2_cooks_reports.output,
+            project=pep.sample_table.project.unique().tolist(),
+        ),
+        expand(
             rules.deseq2_volcano_plot.output,
             project=pep.sample_table.project.unique().tolist(),
         ),

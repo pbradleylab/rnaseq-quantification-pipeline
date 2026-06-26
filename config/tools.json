@@ -50,6 +50,7 @@
         "log2fc_threshold": 0.6,
         "padj_threshold": 0.05,
         "label_top_n": 10,
+        "transform_method": "vst",
         "min_replicates_per_condition": 2
     }
 }

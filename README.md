@@ -148,7 +148,8 @@ The workflow runs a basic DESeq2 analysis after quantification. It can:
   configured `deseq2.padj_threshold` and `deseq2.log2fc_threshold`.
 - Generate modular DESeq2 plots as independent workflow jobs so one plot
   failure does not prevent unrelated plots from running.
-- Keep DESeq2 plots under `results/{project}/differential_expression/`.
+- Write DESeq2 plots into plot-specific result directories such as
+  `results/{project}/sample_distance_heatmap/`.
 
 Generated DESeq2 plots include:
 
@@ -177,9 +178,9 @@ For each project, final outputs are written under `results/{project}/`.
 
 - `final/multiqc/multiqc_report.html`: combined QC report.
 - `final/qc/{project}_sample_qc_summary.tsv`: per-sample QC summary table.
-- `final/qc/{project}_count_annotation_overlap.tsv`: count-matrix ID and
+- `count_annotation_overlap/{project}_count_annotation_overlap.tsv`: count-matrix ID and
   annotation ID overlap report.
-- `final/qc/{project}_gene_biotype_count_summary.tsv`: gene biotype and count
+- `gene_biotype_count_summary/{project}_gene_biotype_count_summary.tsv`: gene biotype and count
   class summary, or a message explaining that `gene_biotype` was not present.
 - `final/quantification/star/gene_counts_all_samples.tsv`: STAR gene-count
   matrix when `quantification_tool` is `star`.
@@ -190,37 +191,37 @@ For each project, final outputs are written under `results/{project}/`.
   transcript estimated-count matrix when `quantification_tool` is `kallisto`.
 - `final/quantification/kallisto/transcript_tpms_all_samples.tsv`: Kallisto
   transcript TPM matrix when `quantification_tool` is `kallisto`.
-- `differential_expression/{project}.tsv`: DESeq2 results table.
-- `differential_expression/{project}_significant_genes.tsv`: genes passing the
+- `deseq2/{project}.tsv`: DESeq2 results table.
+- `significant_gene_tables/{project}_significant_genes.tsv`: genes passing the
   configured adjusted p-value and absolute log2 fold-change thresholds.
-- `differential_expression/{project}_significant_upregulated_genes.tsv`:
+- `significant_gene_tables/{project}_significant_upregulated_genes.tsv`:
   significant genes with positive log2 fold change.
-- `differential_expression/{project}_significant_downregulated_genes.tsv`:
+- `significant_gene_tables/{project}_significant_downregulated_genes.tsv`:
   significant genes with negative log2 fold change.
-- `differential_expression/{project}_normalized_counts.tsv`: DESeq2
+- `normalized_counts/{project}_normalized_counts.tsv`: DESeq2
   size-factor normalized counts.
-- `differential_expression/{project}_transformed_counts.tsv`: transformed
+- `transformed_counts/{project}_transformed_counts.tsv`: transformed
   counts from the configured DESeq2 transform method.
-- `differential_expression/{project}_cooks_gene_report.tsv`: per-gene Cook's
+- `cooks_reports/{project}_cooks_gene_report.tsv`: per-gene Cook's
   distance summary and outlier flag.
-- `differential_expression/{project}_cooks_sample_report.tsv`: per-sample
+- `cooks_reports/{project}_cooks_sample_report.tsv`: per-sample
   Cook's distance summary.
-- `differential_expression/{project}_volcano_plot.png`: volcano plot.
-- `differential_expression/{project}_volcano_plot.svg`: volcano plot.
-- `differential_expression/{project}_ma_plot.png`: MA plot.
-- `differential_expression/{project}_ma_plot.svg`: MA plot.
-- `differential_expression/{project}_normalized_expression_boxplot.png`
-- `differential_expression/{project}_normalized_expression_boxplot.svg`
-- `differential_expression/{project}_normalized_expression_boxplot.pdf`
-- `differential_expression/{project}_normalized_expression_density.png`
-- `differential_expression/{project}_normalized_expression_density.svg`
-- `differential_expression/{project}_normalized_expression_density.pdf`
-- `differential_expression/{project}_sample_distance_heatmap.png`
-- `differential_expression/{project}_sample_distance_heatmap.svg`
-- `differential_expression/{project}_pca.png`
-- `differential_expression/{project}_pca.svg`
-- `differential_expression/{project}_library_sizes_size_factors.png`
-- `differential_expression/{project}_library_sizes_size_factors.svg`
+- `volcano_plot/{project}_volcano_plot.png`: volcano plot.
+- `volcano_plot/{project}_volcano_plot.svg`: volcano plot.
+- `ma_plot/{project}_ma_plot.png`: MA plot.
+- `ma_plot/{project}_ma_plot.svg`: MA plot.
+- `normalized_expression_boxplot/{project}_normalized_expression_boxplot.png`
+- `normalized_expression_boxplot/{project}_normalized_expression_boxplot.svg`
+- `normalized_expression_boxplot/{project}_normalized_expression_boxplot.pdf`
+- `normalized_expression_density/{project}_normalized_expression_density.png`
+- `normalized_expression_density/{project}_normalized_expression_density.svg`
+- `normalized_expression_density/{project}_normalized_expression_density.pdf`
+- `sample_distance_heatmap/{project}_sample_distance_heatmap.png`
+- `sample_distance_heatmap/{project}_sample_distance_heatmap.svg`
+- `pca/{project}_pca.png`
+- `pca/{project}_pca.svg`
+- `library_sizes_size_factors/{project}_library_sizes_size_factors.png`
+- `library_sizes_size_factors/{project}_library_sizes_size_factors.svg`
 
 Intermediate outputs are written under `resources/`, `results/{project}/`, and
 `logs/`. Snakemake-managed Conda environments are written under `.snakemake/`.
@@ -482,7 +483,7 @@ Current behavior:
 - Count matrix `target_id` values are compared with annotation feature IDs
   before DESeq2 starts. The workflow writes the overlap count and example
   non-overlapping IDs to
-  `results/{project}/final/qc/{project}_count_annotation_overlap.tsv`.
+  `results/{project}/count_annotation_overlap/{project}_count_annotation_overlap.tsv`.
 - If the annotation has `gene_biotype` attributes, the workflow summarizes
   annotated genes by biotype and total-count class. If not, it writes an
   explanatory `not_calculated` message to the same report path.
@@ -492,12 +493,12 @@ Current behavior:
 - Kallisto transcript counts are passed into the same DESeq2 entry point as the
   gene count matrices.
 - Normalized counts, transformed counts, and Cook's distance outlier reports are
-  exported under `results/{project}/differential_expression/`.
+  exported under their own directories in `results/{project}/`.
 - Significant gene tables are exported for the configured DESeq2 comparison
   using the configured adjusted p-value and log2 fold-change thresholds.
-- DESeq2 plots are separate workflow rules under
-  `results/{project}/differential_expression/`, so independent plot outputs can
-  be rerun separately after a plot-specific failure.
+- DESeq2 plots are separate workflow rules that write to plot-specific
+  directories under `results/{project}/`, so independent plot outputs can be
+  rerun separately after a plot-specific failure.
 - Volcano and MA plots are generated for the configured DESeq2 comparison.
 - QC plots are generated from normalized or transformed count matrices.
 

@@ -16,7 +16,7 @@ inside `workflow/`.
 - `rules/quantification.smk`: runs Kallisto, STAR, or FeatureCounts
   quantification and merges per-sample outputs.
 - `rules/deseq.smk`: runs DESeq2 and writes differential-expression tables plus
-  independent plot outputs under the differential-expression results directory.
+  independent plot outputs under plot-specific results directories.
 
 ## Script Helpers
 
@@ -42,29 +42,29 @@ inside `workflow/`.
 
 - `results/{project}/final/multiqc/multiqc_report.html`
 - `results/{project}/final/qc/{project}_sample_qc_summary.tsv`
-- `results/{project}/final/qc/{project}_count_annotation_overlap.tsv`
-- `results/{project}/final/qc/{project}_gene_biotype_count_summary.tsv`
+- `results/{project}/count_annotation_overlap/{project}_count_annotation_overlap.tsv`
+- `results/{project}/gene_biotype_count_summary/{project}_gene_biotype_count_summary.tsv`
 - `results/{project}/final/quantification/star/gene_counts_all_samples.tsv`
 - `results/{project}/final/quantification/featurecounts/gene_counts_all_samples.tsv`
 - `results/{project}/final/quantification/kallisto/transcript_counts_all_samples.tsv`
-- `results/{project}/differential_expression/{project}.tsv`
-- `results/{project}/differential_expression/{project}_significant_genes.tsv`
-- `results/{project}/differential_expression/{project}_significant_upregulated_genes.tsv`
-- `results/{project}/differential_expression/{project}_significant_downregulated_genes.tsv`
-- `results/{project}/differential_expression/{project}_normalized_counts.tsv`
-- `results/{project}/differential_expression/{project}_transformed_counts.tsv`
-- `results/{project}/differential_expression/{project}_cooks_gene_report.tsv`
-- `results/{project}/differential_expression/{project}_cooks_sample_report.tsv`
-- `results/{project}/differential_expression/{project}_volcano_plot.png`
-- `results/{project}/differential_expression/{project}_volcano_plot.svg`
-- `results/{project}/differential_expression/{project}_ma_plot.png`
-- `results/{project}/differential_expression/{project}_ma_plot.svg`
-- `results/{project}/differential_expression/{project}_sample_distance_heatmap.png`
-- `results/{project}/differential_expression/{project}_sample_distance_heatmap.svg`
-- `results/{project}/differential_expression/{project}_pca.png`
-- `results/{project}/differential_expression/{project}_pca.svg`
-- `results/{project}/differential_expression/{project}_library_sizes_size_factors.png`
-- `results/{project}/differential_expression/{project}_library_sizes_size_factors.svg`
+- `results/{project}/deseq2/{project}.tsv`
+- `results/{project}/significant_gene_tables/{project}_significant_genes.tsv`
+- `results/{project}/significant_gene_tables/{project}_significant_upregulated_genes.tsv`
+- `results/{project}/significant_gene_tables/{project}_significant_downregulated_genes.tsv`
+- `results/{project}/normalized_counts/{project}_normalized_counts.tsv`
+- `results/{project}/transformed_counts/{project}_transformed_counts.tsv`
+- `results/{project}/cooks_reports/{project}_cooks_gene_report.tsv`
+- `results/{project}/cooks_reports/{project}_cooks_sample_report.tsv`
+- `results/{project}/volcano_plot/{project}_volcano_plot.png`
+- `results/{project}/volcano_plot/{project}_volcano_plot.svg`
+- `results/{project}/ma_plot/{project}_ma_plot.png`
+- `results/{project}/ma_plot/{project}_ma_plot.svg`
+- `results/{project}/sample_distance_heatmap/{project}_sample_distance_heatmap.png`
+- `results/{project}/sample_distance_heatmap/{project}_sample_distance_heatmap.svg`
+- `results/{project}/pca/{project}_pca.png`
+- `results/{project}/pca/{project}_pca.svg`
+- `results/{project}/library_sizes_size_factors/{project}_library_sizes_size_factors.png`
+- `results/{project}/library_sizes_size_factors/{project}_library_sizes_size_factors.svg`
 
 ## Development Checks
 

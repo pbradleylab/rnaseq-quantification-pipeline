@@ -41,6 +41,10 @@ option_list = list(
                         type="character", default="pca.png"),
         make_option(c("--pca_svg_path"),
                         type="character", default="pca.svg"),
+        make_option(c("--library_size_factors_path"),
+                        type="character", default="library_sizes_size_factors.png"),
+        make_option(c("--library_size_factors_svg_path"),
+                        type="character", default="library_sizes_size_factors.svg"),
         make_option(c("--log2fc_threshold"),
                         type="double", default=0.6),
         make_option(c("--padj_threshold"),
@@ -65,6 +69,8 @@ dir.create(dirname(opt$sample_distance_heatmap_path), recursive=TRUE, showWarnin
 dir.create(dirname(opt$sample_distance_heatmap_svg_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$pca_path), recursive=TRUE, showWarnings=FALSE)
 dir.create(dirname(opt$pca_svg_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$library_size_factors_path), recursive=TRUE, showWarnings=FALSE)
+dir.create(dirname(opt$library_size_factors_svg_path), recursive=TRUE, showWarnings=FALSE)
 
 #Assign a variable to both files
 count_data = read.csv(opt$counts_data, header = TRUE, sep = "\t", check.names = FALSE)
@@ -323,4 +329,52 @@ ggsave(
 )
 svg(opt$pca_svg_path, width=7, height=5)
 print(pca_plot)
+dev.off()
+
+library_qc_df = data.frame(
+    sample=colnames(count_data_mtx),
+    raw_library_size=colSums(count_data_mtx),
+    deseq2_size_factor=sizeFactors(dds),
+    check.names=FALSE
+) %>%
+    left_join(
+        metadata %>% rownames_to_column(var="sample"),
+        by="sample"
+    ) %>%
+    pivot_longer(
+        cols=c(raw_library_size, deseq2_size_factor),
+        names_to="metric",
+        values_to="value"
+    ) %>%
+    mutate(
+        metric=recode(
+            metric,
+            raw_library_size="raw library size",
+            deseq2_size_factor="DESeq2 size factor"
+        )
+    )
+
+library_size_factor_plot = ggplot(
+    library_qc_df,
+    aes(x=sample, y=value, fill=.data[[opt$variable_to_analyze]])
+) +
+    geom_col(width=0.75) +
+    facet_wrap(~metric, scales="free_y", ncol=1) +
+    theme_minimal() +
+    theme(axis.text.x=element_text(angle=45, hjust=1)) +
+    labs(
+        x="sample",
+        y=NULL,
+        fill=opt$variable_to_analyze
+    )
+
+ggsave(
+    opt$library_size_factors_path,
+    plot=library_size_factor_plot,
+    width=8,
+    height=6,
+    dpi=300
+)
+svg(opt$library_size_factors_svg_path, width=8, height=6)
+print(library_size_factor_plot)
 dev.off()

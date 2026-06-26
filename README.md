@@ -176,6 +176,8 @@ For each project, final outputs are written under `results/{project}/`.
 - `differential_expression/{project}_sample_distance_heatmap.svg`
 - `differential_expression/{project}_pca.png`
 - `differential_expression/{project}_pca.svg`
+- `differential_expression/{project}_library_sizes_size_factors.png`
+- `differential_expression/{project}_library_sizes_size_factors.svg`
 
 Intermediate outputs are written under `resources/`, `results/{project}/`, and
 `logs/`. Snakemake-managed Conda environments are written under `.snakemake/`.

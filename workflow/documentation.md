@@ -11,8 +11,8 @@ inside `workflow/`.
 - `rules/resources.smk`: prepares reference resources, Kallisto indices, STAR
   indices, and optional GUNC databases.
 - `rules/trimming.smk`: trims paired-end and single-end reads with Trim Galore.
-- `rules/metrics.smk`: runs FastQC, FastQ Screen, GUNC, MultiQC, and the final
-  per-sample QC summary.
+- `rules/metrics.smk`: runs FastQC, FastQ Screen, GUNC, strandedness checks,
+  MultiQC, and the final per-sample QC summary.
 - `rules/quantification.smk`: runs Kallisto, STAR, or FeatureCounts
   quantification and merges per-sample outputs.
 - `rules/deseq.smk`: runs DESeq2 and writes differential-expression tables plus
@@ -24,6 +24,11 @@ inside `workflow/`.
   and project-level rule inputs.
 - `scripts/combine_star_counts.py`: merges STAR `ReadsPerGene.out.tab` files.
   The `--strandedness` option selects the STAR count column.
+- `scripts/check_strandedness.py`: infers library strandedness from STAR
+  `ReadsPerGene.out.tab` columns and compares it to the configured STAR or
+  FeatureCounts strandedness setting.
+- `scripts/merge_strandedness_reports.py`: merges per-sample strandedness
+  reports into the final project-level QC table.
 - `scripts/combine_featurecounts.py`: merges per-sample FeatureCounts outputs.
 - `scripts/combine_kallisto.py`: merges Kallisto `abundance.tsv` files from
   paired-end and single-end output directories.
@@ -42,6 +47,7 @@ inside `workflow/`.
 
 - `results/{project}/final/multiqc/multiqc_report.html`
 - `results/{project}/final/qc/{project}_sample_qc_summary.tsv`
+- `results/{project}/final/qc/{project}_strandedness_summary.tsv`
 - `results/{project}/count_annotation_overlap/{project}_count_annotation_overlap.tsv`
 - `results/{project}/gene_biotype_count_summary/{project}_gene_biotype_count_summary.tsv`
 - `results/{project}/final/quantification/star/gene_counts_all_samples.tsv`
@@ -65,6 +71,16 @@ inside `workflow/`.
 - `results/{project}/pca/{project}_pca.svg`
 - `results/{project}/library_sizes_size_factors/{project}_library_sizes_size_factors.png`
 - `results/{project}/library_sizes_size_factors/{project}_library_sizes_size_factors.svg`
+
+## Strandedness Checks
+
+`strandedness_check.enabled` controls whether STAR/FeatureCounts workflows infer
+library strandedness from STAR `ReadsPerGene.out.tab` outputs. The checker
+compares the inferred value to `star.gene_counts_strandedness` for STAR
+quantification or `featurecounts.strandedness` for FeatureCounts quantification.
+Set `strandedness_check.mode` to `warn` to write mismatch reports without
+failing the workflow, or `fail` to stop when inferred strandedness conflicts
+with the configured count mode.
 
 ## Development Checks
 

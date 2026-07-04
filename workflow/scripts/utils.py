@@ -104,6 +104,41 @@ def validate_preflight_inputs(pep, config):
     if transform_method not in {"vst", "rlog", "auto"}:
         errors.append("deseq2.transform_method must be one of: vst, rlog, auto.")
 
+    strandedness_check = config.get("strandedness_check", {})
+    strandedness_check_mode = str(strandedness_check.get("mode", "warn")).lower()
+    if strandedness_check_mode not in {"warn", "fail"}:
+        errors.append("strandedness_check.mode must be one of: warn, fail.")
+    try:
+        strandedness_min_fraction = float(
+            strandedness_check.get("min_fraction", 0.75)
+        )
+    except (TypeError, ValueError):
+        strandedness_min_fraction = 0.75
+        errors.append("strandedness_check.min_fraction must be numeric.")
+    if not 0 <= strandedness_min_fraction <= 1:
+        errors.append("strandedness_check.min_fraction must be between 0 and 1.")
+    try:
+        strandedness_min_ratio = float(strandedness_check.get("min_ratio", 2.0))
+    except (TypeError, ValueError):
+        strandedness_min_ratio = 2.0
+        errors.append("strandedness_check.min_ratio must be numeric.")
+    if strandedness_min_ratio < 1:
+        errors.append("strandedness_check.min_ratio must be at least 1.")
+
+    star_strandedness = str(
+        config.get("star", {}).get("gene_counts_strandedness", "unstranded")
+    ).lower()
+    if star_strandedness not in {"unstranded", "forward", "reverse"}:
+        errors.append(
+            "star.gene_counts_strandedness must be one of: unstranded, "
+            "forward, reverse."
+        )
+    featurecounts_strandedness = config.get("featurecounts", {}).get(
+        "strandedness", 0
+    )
+    if str(featurecounts_strandedness) not in {"0", "1", "2"}:
+        errors.append("featurecounts.strandedness must be one of: 0, 1, 2.")
+
     if config_flag(config, "run_sortmerna"):
         sortmerna_refs = _as_list(config.get("sortmerna", {}).get("refs", []))
         if not sortmerna_refs:
@@ -368,6 +403,32 @@ def get_star_gene_counts(wildcards, pep, rules):
             out.append(rules.star_reads_per_gene.output[0].format(project=project, subsample=subsample))
         elif seq_method == "single_end":
             out.append(rules.star_reads_per_gene_single.output[0].format(project=project, subsample=subsample))
+    return out
+
+
+def get_strandedness_reports(wildcards, pep, rules, config):
+    out = []
+    if not config_flag(config.get("strandedness_check", {}), "enabled", "true"):
+        return out
+    if config["quantification_tool"].lower() not in ["star", "featurecounts"]:
+        return out
+    for subsample in pep.subsample_table.subsample.tolist():
+        project = get_subsample_attributes(subsample, "project", pep)
+        if project != wildcards.project:
+            continue
+        seq_method = get_seq_method(subsample, pep)
+        if seq_method == "paired_end":
+            out.append(
+                rules.strandedness_check.output[0].format(
+                    project=project, subsample=subsample
+                )
+            )
+        elif seq_method == "single_end":
+            out.append(
+                rules.strandedness_check_single.output[0].format(
+                    project=project, subsample=subsample
+                )
+            )
     return out
 
 

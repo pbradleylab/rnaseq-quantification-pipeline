@@ -24,6 +24,12 @@
     "trim_galore": {
         "mem": 1024
     },
+    "sortmerna": {
+        "mem": 4096,
+        "threads": 8,
+        "refs": [],
+        "extra": ""
+    },
     "combine_quants": {
         "mem": 1024
     },

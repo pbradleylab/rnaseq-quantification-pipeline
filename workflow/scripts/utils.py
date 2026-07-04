@@ -12,6 +12,14 @@ def _as_list(value):
     return [value]
 
 
+def as_list(value):
+    return _as_list(value)
+
+
+def config_flag(config, key, default="false"):
+    return str(config.get(key, default)).lower() == "true"
+
+
 def _format_list(values):
     return ", ".join(str(value) for value in sorted(values))
 
@@ -95,6 +103,23 @@ def validate_preflight_inputs(pep, config):
     transform_method = str(deseq_config.get("transform_method", "vst")).lower()
     if transform_method not in {"vst", "rlog", "auto"}:
         errors.append("deseq2.transform_method must be one of: vst, rlog, auto.")
+
+    if config_flag(config, "run_sortmerna"):
+        sortmerna_refs = _as_list(config.get("sortmerna", {}).get("refs", []))
+        if not sortmerna_refs:
+            errors.append(
+                "run_sortmerna is true, but sortmerna.refs does not list any "
+                "local rRNA reference FASTA files."
+            )
+        missing_sortmerna_refs = [
+            ref for ref in sortmerna_refs if not Path(ref).exists()
+        ]
+        if missing_sortmerna_refs:
+            errors.append(
+                "SortMeRNA rRNA reference FASTA paths do not exist: "
+                f"{_format_list(missing_sortmerna_refs)}"
+            )
+
     if not design_formula and variable_to_analyze:
         design_formula = f"~ {variable_to_analyze}"
     if not design_formula:
@@ -286,6 +311,36 @@ def get_kallisto_h5(wildcards, pep, rules):
         elif seq_method == "single_end":
             out.append(rules.kallisto_single.output.h5.format(project=project, subsample=subsample))
     return out
+
+
+def get_quantification_reads(wildcards, rules, config):
+    if config_flag(config, "run_sortmerna"):
+        return [
+            rules.sortmerna.output.r1.format(
+                project=wildcards.project, subsample=wildcards.subsample
+            ),
+            rules.sortmerna.output.r2.format(
+                project=wildcards.project, subsample=wildcards.subsample
+            ),
+        ]
+    return [
+        rules.trim_galore.output.r1.format(
+            project=wildcards.project, subsample=wildcards.subsample
+        ),
+        rules.trim_galore.output.r2.format(
+            project=wildcards.project, subsample=wildcards.subsample
+        ),
+    ]
+
+
+def get_quantification_reads_single(wildcards, rules, config):
+    if config_flag(config, "run_sortmerna"):
+        return rules.sortmerna_single.output.reads.format(
+            project=wildcards.project, subsample=wildcards.subsample
+        )
+    return rules.trim_galore_single.output[0].format(
+        project=wildcards.project, subsample=wildcards.subsample
+    )
 
 
 def get_kallisto_abundance_tsv(wildcards, pep, rules):

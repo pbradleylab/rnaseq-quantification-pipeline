@@ -13,5 +13,6 @@
     },
     "metadata":"test/Mycolicibacterium_smegmatis/deseq_metadata.csv",
     "run_gunc":"true",
+    "run_sortmerna":"false",
     "quantification_tool":"star"
 }

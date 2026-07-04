@@ -7,7 +7,7 @@
 # Official documentation can be found here: https:/pachterlab.github.io/kallisto/
 rule kallisto:
     input:
-        reads=rules.trim_galore.output,
+        reads=lambda wildcards: get_quantification_reads(wildcards, rules, config),
         transcriptome=rules.gffread.output,
         index=rules.kallisto_index.output,
     output:
@@ -31,7 +31,9 @@ rule kallisto:
 
 rule kallisto_single:
     input:
-        reads=rules.trim_galore_single.output,
+        reads=lambda wildcards: get_quantification_reads_single(
+            wildcards, rules, config
+        ),
         transcriptome=rules.gffread.output,
         index=rules.kallisto_index.output,
     output:
@@ -82,7 +84,7 @@ rule merge_kallisto:
 
 rule star_reads_per_gene:
     input:
-        reads=rules.trim_galore.output,
+        reads=lambda wildcards: get_quantification_reads(wildcards, rules, config),
         transcriptome=rules.gffread.output,
         index=rules.star_index.output,
     output:
@@ -118,7 +120,9 @@ rule star_reads_per_gene:
 
 rule star_reads_per_gene_single:
     input:
-        reads=rules.trim_galore_single.output,
+        reads=lambda wildcards: get_quantification_reads_single(
+            wildcards, rules, config
+        ),
         transcriptome=rules.gffread.output,
         index=rules.star_index.output,
     output:
@@ -155,7 +159,7 @@ rule star_reads_per_gene_single:
 
 rule star_reads_per_transcript:
     input:
-        reads=rules.trim_galore.output,
+        reads=lambda wildcards: get_quantification_reads(wildcards, rules, config),
         transcriptome=rules.gffread.output,
         index=rules.star_index.output,
     output:
@@ -190,7 +194,9 @@ rule star_reads_per_transcript:
 
 rule star_reads_per_transcript_single:
     input:
-        reads=rules.trim_galore_single.output,
+        reads=lambda wildcards: get_quantification_reads_single(
+            wildcards, rules, config
+        ),
         transcriptome=rules.gffread.output,
         index=rules.star_index.output,
     output:

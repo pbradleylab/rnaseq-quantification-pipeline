@@ -4,3 +4,4 @@ channels:
   - conda-forge
 dependencies:
   - trim-galore=2.2.0
+  - sortmerna=4.3.7

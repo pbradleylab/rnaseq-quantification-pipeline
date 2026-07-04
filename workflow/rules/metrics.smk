@@ -148,6 +148,12 @@ def get_multiqc_subsamples(wildcards):
                     project=project, subsample=subsample
                 )
             )
+            if config_flag(config, "run_sortmerna"):
+                metricsLST.append(
+                    rules.sortmerna.output.report.format(
+                        project=project, subsample=subsample
+                    )
+                )
         elif seq_method == "single_end":
             metricsLST.append(
                 rules.fastqc_single.output[0].format(
@@ -164,6 +170,12 @@ def get_multiqc_subsamples(wildcards):
                     project=project, subsample=subsample
                 )
             )
+            if config_flag(config, "run_sortmerna"):
+                metricsLST.append(
+                    rules.sortmerna_single.output.report.format(
+                        project=project, subsample=subsample
+                    )
+                )
         if config["quantification_tool"].lower() == "kallisto":
             metricsLST.append(rules.merge_kallisto.output[0].format(project=project))
         elif config["quantification_tool"].lower() == "star":

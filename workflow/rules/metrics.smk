@@ -33,7 +33,10 @@ def get_qc_fastqc(wildcards):
         seq_method = get_seq_method(subsample, pep)
         if seq_method == "paired_end":
             out.append(
-                rules.fastqc.output[0].format(project=project, subsample=subsample)
+                rules.fastqc.output.r1.format(project=project, subsample=subsample)
+            )
+            out.append(
+                rules.fastqc.output.r2.format(project=project, subsample=subsample)
             )
             out.append(
                 rules.fastqc_trimmed.output.r1.format(
@@ -68,7 +71,12 @@ def get_qc_fastq_screen(wildcards):
         seq_method = get_seq_method(subsample, pep)
         if seq_method == "paired_end":
             out.append(
-                rules.fastq_screen.output[0].format(
+                rules.fastq_screen.output.r1.format(
+                    project=project, subsample=subsample
+                )
+            )
+            out.append(
+                rules.fastq_screen.output.r2.format(
                     project=project, subsample=subsample
                 )
             )
@@ -115,7 +123,10 @@ def get_multiqc_subsamples(wildcards):
         # Always run rules on the outside
         if seq_method == "paired_end":
             metricsLST.append(
-                rules.fastqc.output[0].format(project=project, subsample=subsample)
+                rules.fastqc.output.r1.format(project=project, subsample=subsample)
+            )
+            metricsLST.append(
+                rules.fastqc.output.r2.format(project=project, subsample=subsample)
             )
             metricsLST.append(
                 rules.fastqc_trimmed.output.r1.format(
@@ -128,7 +139,12 @@ def get_multiqc_subsamples(wildcards):
                 )
             )
             metricsLST.append(
-                rules.fastq_screen.output[0].format(
+                rules.fastq_screen.output.r1.format(
+                    project=project, subsample=subsample
+                )
+            )
+            metricsLST.append(
+                rules.fastq_screen.output.r2.format(
                     project=project, subsample=subsample
                 )
             )
@@ -284,7 +300,8 @@ rule fastq_screen:
         read1=rules.symlink_files.output[0],
         read2=rules.symlink_files.output[1],
     output:
-        "results/{project}/reports/fastq_screen/{subsample}/{subsample}_R1_screen.html",
+        r1="results/{project}/reports/fastq_screen/{subsample}/{subsample}_R1_screen.html",
+        r2="results/{project}/reports/fastq_screen/{subsample}/{subsample}_R2_screen.html",
     log:
         "logs/{project}/reports/fastq_screen/{subsample}.log",
     conda:
@@ -339,7 +356,8 @@ rule fastqc:
         read1=rules.symlink_files.output[0],
         read2=rules.symlink_files.output[1],
     output:
-        "results/{project}/reports/fastqc/{subsample}_R1_fastqc.zip",
+        r1="results/{project}/reports/fastqc/{subsample}_R1_fastqc.zip",
+        r2="results/{project}/reports/fastqc/{subsample}_R2_fastqc.zip",
     log:
         "logs/{project}/reports/fastqc/{subsample}.log",
     conda:

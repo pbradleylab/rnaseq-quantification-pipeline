@@ -11,7 +11,8 @@ rule kallisto:
         transcriptome=rules.gffread.output,
         index=rules.kallisto_index.output,
     output:
-        "results/{project}/quantification/kallisto/{subsample}/abundance.h5",
+        h5="results/{project}/quantification/kallisto/{subsample}/abundance.h5",
+        tsv="results/{project}/quantification/kallisto/{subsample}/abundance.tsv",
     log:
         "logs/{project}/quantification/kallisto/{subsample}.log",
     conda:
@@ -34,7 +35,8 @@ rule kallisto_single:
         transcriptome=rules.gffread.output,
         index=rules.kallisto_index.output,
     output:
-        "results/{project}/quantification/kallisto_single/{subsample}/abundance.h5",
+        h5="results/{project}/quantification/kallisto_single/{subsample}/abundance.h5",
+        tsv="results/{project}/quantification/kallisto_single/{subsample}/abundance.tsv",
     log:
         "logs/{project}/quantification/kallisto_single/{subsample}.log",
     conda:
@@ -56,7 +58,7 @@ rule kallisto_single:
 
 rule merge_kallisto:
     input:
-        lambda wildcards: get_kallisto_h5(wildcards, pep, rules),
+        lambda wildcards: get_kallisto_abundance_tsv(wildcards, pep, rules),
     output:
         tpm="results/{project}/final/quantification/kallisto/transcript_tpms_all_samples.tsv",
         counts="results/{project}/final/quantification/kallisto/transcript_counts_all_samples.tsv",

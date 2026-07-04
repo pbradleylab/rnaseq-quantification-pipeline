@@ -27,7 +27,7 @@ rule download_fastq_screen_genomes:
 
 # Download given genome if needed
 rule download_genome:
-    output: "resources/download_genome/"
+    output: f"resources/download_genome/{config['genome']['name']}.fa"
     params:
         url=config["genome"]["url"]
     log: "logs/resources/download_genome.log"
@@ -39,7 +39,7 @@ rule download_genome:
 
 # Download given gff3 if needed
 rule download_gff3:
-    output: "resources/download_gff3/"
+    output: f"resources/download_gff3/{config['genome']['name']}.gff3"
     params:
         url=config["gff3"]["url"]
     log: "logs/resources/download_gff3.log"
@@ -86,8 +86,7 @@ rule kallisto_index:
     conda: "../envs/quantification.yml"
     shell:
         """
-        kallisto index -i {params.name}.kallisto.index {input} -h > {log} 2>&1
-        mv {params.name}.kallisto.index resources/{params.name} >> {log} 2>&1
+        kallisto index -i {output} {input} > {log} 2>&1
         """
 
 rule convert_gff_to_gtf:

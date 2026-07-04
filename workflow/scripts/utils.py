@@ -282,9 +282,23 @@ def get_kallisto_h5(wildcards, pep, rules):
             continue
         seq_method = get_seq_method(subsample, pep)
         if seq_method == "paired_end":
-            out.append(rules.kallisto.output[0].format(project=project, subsample=subsample))
+            out.append(rules.kallisto.output.h5.format(project=project, subsample=subsample))
         elif seq_method == "single_end":
-            out.append(rules.kallisto_single.output[0].format(project=project, subsample=subsample))
+            out.append(rules.kallisto_single.output.h5.format(project=project, subsample=subsample))
+    return out
+
+
+def get_kallisto_abundance_tsv(wildcards, pep, rules):
+    out = []
+    for subsample in pep.subsample_table.subsample.tolist():
+        project = get_subsample_attributes(subsample, "project", pep)
+        if project != wildcards.project:
+            continue
+        seq_method = get_seq_method(subsample, pep)
+        if seq_method == "paired_end":
+            out.append(rules.kallisto.output.tsv.format(project=project, subsample=subsample))
+        elif seq_method == "single_end":
+            out.append(rules.kallisto_single.output.tsv.format(project=project, subsample=subsample))
     return out
 
 

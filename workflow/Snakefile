@@ -85,3 +85,7 @@ rule all:
             rules.qc_summary.output[0],
             project=pep.sample_table.project.unique().tolist(),
         ),
+        expand(
+            rules.multiqc.output.html,
+            project=pep.sample_table.project.unique().tolist(),
+        ),

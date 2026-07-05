@@ -33,7 +33,10 @@ def get_qc_fastqc(wildcards):
         seq_method = get_seq_method(subsample, pep)
         if seq_method == "paired_end":
             out.append(
-                rules.fastqc.output[0].format(project=project, subsample=subsample)
+                rules.fastqc.output.r1.format(project=project, subsample=subsample)
+            )
+            out.append(
+                rules.fastqc.output.r2.format(project=project, subsample=subsample)
             )
             out.append(
                 rules.fastqc_trimmed.output.r1.format(
@@ -68,7 +71,12 @@ def get_qc_fastq_screen(wildcards):
         seq_method = get_seq_method(subsample, pep)
         if seq_method == "paired_end":
             out.append(
-                rules.fastq_screen.output[0].format(
+                rules.fastq_screen.output.r1.format(
+                    project=project, subsample=subsample
+                )
+            )
+            out.append(
+                rules.fastq_screen.output.r2.format(
                     project=project, subsample=subsample
                 )
             )
@@ -115,7 +123,10 @@ def get_multiqc_subsamples(wildcards):
         # Always run rules on the outside
         if seq_method == "paired_end":
             metricsLST.append(
-                rules.fastqc.output[0].format(project=project, subsample=subsample)
+                rules.fastqc.output.r1.format(project=project, subsample=subsample)
+            )
+            metricsLST.append(
+                rules.fastqc.output.r2.format(project=project, subsample=subsample)
             )
             metricsLST.append(
                 rules.fastqc_trimmed.output.r1.format(
@@ -128,10 +139,21 @@ def get_multiqc_subsamples(wildcards):
                 )
             )
             metricsLST.append(
-                rules.fastq_screen.output[0].format(
+                rules.fastq_screen.output.r1.format(
                     project=project, subsample=subsample
                 )
             )
+            metricsLST.append(
+                rules.fastq_screen.output.r2.format(
+                    project=project, subsample=subsample
+                )
+            )
+            if config_flag(config, "run_sortmerna"):
+                metricsLST.append(
+                    rules.sortmerna.output.report.format(
+                        project=project, subsample=subsample
+                    )
+                )
         elif seq_method == "single_end":
             metricsLST.append(
                 rules.fastqc_single.output[0].format(
@@ -148,6 +170,12 @@ def get_multiqc_subsamples(wildcards):
                     project=project, subsample=subsample
                 )
             )
+            if config_flag(config, "run_sortmerna"):
+                metricsLST.append(
+                    rules.sortmerna_single.output.report.format(
+                        project=project, subsample=subsample
+                    )
+                )
         if config["quantification_tool"].lower() == "kallisto":
             metricsLST.append(rules.merge_kallisto.output[0].format(project=project))
         elif config["quantification_tool"].lower() == "star":
@@ -172,6 +200,14 @@ def get_multiqc_subsamples(wildcards):
                         project=project, subsample=subsample
                     )
                 )
+                if config_flag(
+                    config.get("strandedness_check", {}), "enabled", "true"
+                ):
+                    metricsLST.append(
+                        rules.strandedness_check.output[0].format(
+                            project=project, subsample=subsample
+                        )
+                    )
             elif seq_method == "single_end":
                 metricsLST.append(
                     rules.star_reads_per_gene_single.output.counts.format(
@@ -193,6 +229,14 @@ def get_multiqc_subsamples(wildcards):
                         project=project, subsample=subsample
                     )
                 )
+                if config_flag(
+                    config.get("strandedness_check", {}), "enabled", "true"
+                ):
+                    metricsLST.append(
+                        rules.strandedness_check_single.output[0].format(
+                            project=project, subsample=subsample
+                        )
+                    )
         elif config["quantification_tool"].lower() == "featurecounts":
             if seq_method == "paired_end":
                 metricsLST.append(
@@ -205,6 +249,14 @@ def get_multiqc_subsamples(wildcards):
                         project=project, subsample=subsample
                     )
                 )
+                if config_flag(
+                    config.get("strandedness_check", {}), "enabled", "true"
+                ):
+                    metricsLST.append(
+                        rules.strandedness_check.output[0].format(
+                            project=project, subsample=subsample
+                        )
+                    )
             elif seq_method == "single_end":
                 metricsLST.append(
                     rules.featurecounts_single.output.summary.format(
@@ -216,6 +268,14 @@ def get_multiqc_subsamples(wildcards):
                         project=project, subsample=subsample
                     )
                 )
+                if config_flag(
+                    config.get("strandedness_check", {}), "enabled", "true"
+                ):
+                    metricsLST.append(
+                        rules.strandedness_check_single.output[0].format(
+                            project=project, subsample=subsample
+                        )
+                    )
         if config["run_gunc"].lower() == "true":
             metricsLST.append(
                 rules.gunc_plot.output[0].format(project=project, subsample=subsample)
@@ -284,7 +344,8 @@ rule fastq_screen:
         read1=rules.symlink_files.output[0],
         read2=rules.symlink_files.output[1],
     output:
-        "results/{project}/reports/fastq_screen/{subsample}/{subsample}_R1_screen.html",
+        r1="results/{project}/reports/fastq_screen/{subsample}/{subsample}_R1_screen.html",
+        r2="results/{project}/reports/fastq_screen/{subsample}/{subsample}_R2_screen.html",
     log:
         "logs/{project}/reports/fastq_screen/{subsample}.log",
     conda:
@@ -339,7 +400,8 @@ rule fastqc:
         read1=rules.symlink_files.output[0],
         read2=rules.symlink_files.output[1],
     output:
-        "results/{project}/reports/fastqc/{subsample}_R1_fastqc.zip",
+        r1="results/{project}/reports/fastqc/{subsample}_R1_fastqc.zip",
+        r2="results/{project}/reports/fastqc/{subsample}_R2_fastqc.zip",
     log:
         "logs/{project}/reports/fastqc/{subsample}.log",
     conda:
@@ -441,6 +503,102 @@ rule qc_summary:
     shell:
         """
         python3 workflow/scripts/summarize_qc.py --metadata {input.metadata} --counts {input.counts} --output {output} --fastqc {input.fastqc} --fastq-screen {input.fastq_screen} --star-logs {input.star_logs} 2> {log}
+        """
+
+
+rule strandedness_check:
+    input:
+        counts=rules.star_reads_per_gene.output.counts,
+    output:
+        "results/{project}/reports/strandedness_paired/{subsample}.strandedness.tsv",
+    log:
+        "logs/{project}/reports/strandedness/{subsample}.log",
+    conda:
+        "../envs/metrics.yml"
+    resources:
+        mem_mb=config["multiqc"]["mem"],
+    params:
+        sample="{subsample}",
+        quantification_tool=config["quantification_tool"],
+        star_strandedness=config["star"].get(
+            "gene_counts_strandedness", "unstranded"
+        ),
+        featurecounts_strandedness=config["featurecounts"].get("strandedness", 0),
+        mode=config["strandedness_check"].get("mode", "warn"),
+        min_fraction=config["strandedness_check"].get("min_fraction", 0.75),
+        min_ratio=config["strandedness_check"].get("min_ratio", 2.0),
+        logdir="logs/{project}/reports/strandedness/",
+    shell:
+        """
+        mkdir -p {params.logdir}
+        python3 workflow/scripts/check_strandedness.py \
+            --star-counts {input.counts} \
+            --output {output} \
+            --sample {params.sample} \
+            --quantification-tool {params.quantification_tool} \
+            --star-strandedness {params.star_strandedness} \
+            --featurecounts-strandedness {params.featurecounts_strandedness} \
+            --mode {params.mode} \
+            --min-fraction {params.min_fraction} \
+            --min-ratio {params.min_ratio} 2> {log}
+        """
+
+
+rule strandedness_check_single:
+    input:
+        counts=rules.star_reads_per_gene_single.output.counts,
+    output:
+        "results/{project}/reports/strandedness_single/{subsample}.strandedness.tsv",
+    log:
+        "logs/{project}/reports/strandedness/{subsample}.log",
+    conda:
+        "../envs/metrics.yml"
+    resources:
+        mem_mb=config["multiqc"]["mem"],
+    params:
+        sample="{subsample}",
+        quantification_tool=config["quantification_tool"],
+        star_strandedness=config["star"].get(
+            "gene_counts_strandedness", "unstranded"
+        ),
+        featurecounts_strandedness=config["featurecounts"].get("strandedness", 0),
+        mode=config["strandedness_check"].get("mode", "warn"),
+        min_fraction=config["strandedness_check"].get("min_fraction", 0.75),
+        min_ratio=config["strandedness_check"].get("min_ratio", 2.0),
+        logdir="logs/{project}/reports/strandedness/",
+    shell:
+        """
+        mkdir -p {params.logdir}
+        python3 workflow/scripts/check_strandedness.py \
+            --star-counts {input.counts} \
+            --output {output} \
+            --sample {params.sample} \
+            --quantification-tool {params.quantification_tool} \
+            --star-strandedness {params.star_strandedness} \
+            --featurecounts-strandedness {params.featurecounts_strandedness} \
+            --mode {params.mode} \
+            --min-fraction {params.min_fraction} \
+            --min-ratio {params.min_ratio} 2> {log}
+        """
+
+
+rule strandedness_summary:
+    input:
+        lambda wildcards: get_strandedness_reports(wildcards, pep, rules, config),
+    output:
+        "results/{project}/final/qc/{project}_strandedness_summary.tsv",
+    log:
+        "logs/{project}/reports/strandedness/summary.log",
+    conda:
+        "../envs/metrics.yml"
+    resources:
+        mem_mb=config["multiqc"]["mem"],
+    params:
+        logdir="logs/{project}/reports/strandedness/",
+    shell:
+        """
+        mkdir -p {params.logdir}
+        python3 workflow/scripts/merge_strandedness_reports.py --output {output} {input} 2> {log}
         """
 
 

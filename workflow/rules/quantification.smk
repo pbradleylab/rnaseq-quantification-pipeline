@@ -7,11 +7,12 @@
 # Official documentation can be found here: https:/pachterlab.github.io/kallisto/
 rule kallisto:
     input:
-        reads=rules.trim_galore.output,
+        reads=lambda wildcards: get_quantification_reads(wildcards, rules, config),
         transcriptome=rules.gffread.output,
         index=rules.kallisto_index.output,
     output:
-        "results/{project}/quantification/kallisto/{subsample}/abundance.h5",
+        h5="results/{project}/quantification/kallisto/{subsample}/abundance.h5",
+        tsv="results/{project}/quantification/kallisto/{subsample}/abundance.tsv",
     log:
         "logs/{project}/quantification/kallisto/{subsample}.log",
     conda:
@@ -30,11 +31,14 @@ rule kallisto:
 
 rule kallisto_single:
     input:
-        reads=rules.trim_galore_single.output,
+        reads=lambda wildcards: get_quantification_reads_single(
+            wildcards, rules, config
+        ),
         transcriptome=rules.gffread.output,
         index=rules.kallisto_index.output,
     output:
-        "results/{project}/quantification/kallisto_single/{subsample}/abundance.h5",
+        h5="results/{project}/quantification/kallisto_single/{subsample}/abundance.h5",
+        tsv="results/{project}/quantification/kallisto_single/{subsample}/abundance.tsv",
     log:
         "logs/{project}/quantification/kallisto_single/{subsample}.log",
     conda:
@@ -56,7 +60,7 @@ rule kallisto_single:
 
 rule merge_kallisto:
     input:
-        lambda wildcards: get_kallisto_h5(wildcards, pep, rules),
+        lambda wildcards: get_kallisto_abundance_tsv(wildcards, pep, rules),
     output:
         tpm="results/{project}/final/quantification/kallisto/transcript_tpms_all_samples.tsv",
         counts="results/{project}/final/quantification/kallisto/transcript_counts_all_samples.tsv",
@@ -80,7 +84,7 @@ rule merge_kallisto:
 
 rule star_reads_per_gene:
     input:
-        reads=rules.trim_galore.output,
+        reads=lambda wildcards: get_quantification_reads(wildcards, rules, config),
         transcriptome=rules.gffread.output,
         index=rules.star_index.output,
     output:
@@ -116,7 +120,9 @@ rule star_reads_per_gene:
 
 rule star_reads_per_gene_single:
     input:
-        reads=rules.trim_galore_single.output,
+        reads=lambda wildcards: get_quantification_reads_single(
+            wildcards, rules, config
+        ),
         transcriptome=rules.gffread.output,
         index=rules.star_index.output,
     output:
@@ -153,7 +159,7 @@ rule star_reads_per_gene_single:
 
 rule star_reads_per_transcript:
     input:
-        reads=rules.trim_galore.output,
+        reads=lambda wildcards: get_quantification_reads(wildcards, rules, config),
         transcriptome=rules.gffread.output,
         index=rules.star_index.output,
     output:
@@ -188,7 +194,9 @@ rule star_reads_per_transcript:
 
 rule star_reads_per_transcript_single:
     input:
-        reads=rules.trim_galore_single.output,
+        reads=lambda wildcards: get_quantification_reads_single(
+            wildcards, rules, config
+        ),
         transcriptome=rules.gffread.output,
         index=rules.star_index.output,
     output:

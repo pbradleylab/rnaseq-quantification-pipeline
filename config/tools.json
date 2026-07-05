@@ -21,8 +21,20 @@
     "multiqc": {
         "mem": 1024
     },
+    "strandedness_check": {
+        "enabled": "true",
+        "mode": "warn",
+        "min_fraction": 0.75,
+        "min_ratio": 2.0
+    },
     "trim_galore": {
         "mem": 1024
+    },
+    "sortmerna": {
+        "mem": 4096,
+        "threads": 8,
+        "refs": [],
+        "extra": ""
     },
     "combine_quants": {
         "mem": 1024

@@ -51,6 +51,7 @@ inside `workflow/`.
 - `results/{project}/final/multiqc/multiqc_report.html`
 - `results/{project}/final/qc/{project}_sample_qc_summary.tsv`
 - `results/{project}/final/qc/{project}_sample_identity_report.tsv`
+- `results/{project}/final/qc/{project}_sample_identity_similarity_matrix.tsv`
 - `results/{project}/final/qc/{project}_strandedness_summary.tsv`
 - `results/{project}/count_annotation_overlap/{project}_count_annotation_overlap.tsv`
 - `results/{project}/gene_biotype_count_summary/{project}_gene_biotype_count_summary.tsv`

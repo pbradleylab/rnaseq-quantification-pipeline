@@ -120,6 +120,8 @@ For each project, the workflow produces:
 - A sample identity report that fingerprints expression profiles, identifies
   each sample's nearest expression neighbor, and flags low-similarity or
   metadata-discordant samples.
+- A sample identity similarity matrix with all pairwise expression-profile
+  correlations.
 - FastQC reports for raw reads.
 - FastQC reports for trimmed reads.
 - FastQ Screen reports.
@@ -184,6 +186,8 @@ For each project, final outputs are written under `results/{project}/`.
 - `final/qc/{project}_sample_identity_report.tsv`: expression-profile sample
   identity report with nearest-neighbor correlations, metadata agreement, and
   review flags.
+- `final/qc/{project}_sample_identity_similarity_matrix.tsv`: all pairwise
+  sample expression-profile correlations used by the identity report.
 - `count_annotation_overlap/{project}_count_annotation_overlap.tsv`: count-matrix ID and
   annotation ID overlap report.
 - `gene_biotype_count_summary/{project}_gene_biotype_count_summary.tsv`: gene biotype and count

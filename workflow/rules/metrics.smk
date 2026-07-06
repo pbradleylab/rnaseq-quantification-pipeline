@@ -511,7 +511,11 @@ rule sample_identity_report:
         metadata=config["metadata"],
         counts=get_quant_counts,
     output:
-        "results/{project}/final/qc/{project}_sample_identity_report.tsv",
+        report="results/{project}/final/qc/{project}_sample_identity_report.tsv",
+        similarity_matrix=(
+            "results/{project}/final/qc/"
+            "{project}_sample_identity_similarity_matrix.tsv"
+        ),
     log:
         "logs/{project}/reports/sample_identity/sample_identity_report.log",
     conda:
@@ -539,7 +543,8 @@ rule sample_identity_report:
         python3 workflow/scripts/sample_identity_report.py \
             --metadata {input.metadata} \
             --counts {input.counts} \
-            --output {output} \
+            --output {output.report} \
+            --similarity-matrix {output.similarity_matrix} \
             --group-column {params.group_column:q} \
             --top-variable-features {params.top_variable_features} \
             --min-nearest-correlation {params.min_nearest_correlation} \

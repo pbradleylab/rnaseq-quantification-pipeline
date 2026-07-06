@@ -181,6 +181,25 @@ def fmt_corr(value):
     return "" if value is None else f"{value:.4f}"
 
 
+def write_similarity_matrix(path, ordered_samples, count_samples, correlations):
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    count_sample_set = set(count_samples)
+    with open(output, "w", newline="") as handle:
+        writer = csv.writer(handle, delimiter="\t")
+        writer.writerow(["sample", *ordered_samples])
+        for sample in ordered_samples:
+            row = [sample]
+            for other in ordered_samples:
+                if sample == other and sample in count_sample_set:
+                    row.append("1.0000")
+                elif sample in count_sample_set and other in count_sample_set:
+                    row.append(fmt_corr(correlations.get(sample, {}).get(other)))
+                else:
+                    row.append("")
+            writer.writerow(row)
+
+
 def identity_status(
     sample,
     count_samples,
@@ -218,6 +237,7 @@ def main():
     parser.add_argument("--counts", required=True)
     parser.add_argument("--metadata", required=True)
     parser.add_argument("--output", required=True)
+    parser.add_argument("--similarity-matrix", required=True)
     parser.add_argument("--group-column", default="")
     parser.add_argument("--top-variable-features", type=int, default=5000)
     parser.add_argument("--min-nearest-correlation", type=float, default=0.90)
@@ -244,6 +264,9 @@ def main():
     library_totals = {
         sample: sum(count_values.get(sample, [])) for sample in count_samples
     }
+    write_similarity_matrix(
+        args.similarity_matrix, ordered_samples, count_samples, correlations
+    )
 
     output = Path(args.output)
     output.parent.mkdir(parents=True, exist_ok=True)

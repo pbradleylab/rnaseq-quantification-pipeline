@@ -281,6 +281,11 @@ def get_multiqc_subsamples(wildcards):
                 rules.gunc_plot.output[0].format(project=project, subsample=subsample)
             )
 
+    metricsLST.append(
+        rules.sample_identity_report.output.multiqc_table.format(
+            project=wildcards.project
+        )
+    )
     return metricsLST
 
 
@@ -503,6 +508,63 @@ rule qc_summary:
     shell:
         """
         python3 workflow/scripts/summarize_qc.py --metadata {input.metadata} --counts {input.counts} --output {output} --fastqc {input.fastqc} --fastq-screen {input.fastq_screen} --star-logs {input.star_logs} 2> {log}
+        """
+
+
+rule sample_identity_report:
+    input:
+        metadata=config["metadata"],
+        counts=get_quant_counts,
+    output:
+        report="results/{project}/final/qc/{project}_sample_identity_report.tsv",
+        similarity_matrix=(
+            "results/{project}/final/qc/"
+            "{project}_sample_identity_similarity_matrix.tsv"
+        ),
+        multiqc_table="results/{project}/final/qc/{project}_sample_identity_mqc.tsv",
+    log:
+        "logs/{project}/reports/sample_identity/sample_identity_report.log",
+    conda:
+        "../envs/metrics.yml"
+    resources:
+        mem_mb=config["multiqc"]["mem"],
+    params:
+        group_column=config.get("sample_identity", {}).get(
+            "group_column",
+            config.get("deseq2", {}).get("variable_to_analyze", ""),
+        ),
+        top_variable_features=config.get("sample_identity", {}).get(
+            "top_variable_features", 5000
+        ),
+        min_nearest_correlation=config.get("sample_identity", {}).get(
+            "min_nearest_correlation", 0.90
+        ),
+        same_group_margin=config.get("sample_identity", {}).get(
+            "same_group_margin", 0.03
+        ),
+        duplicate_min_correlation=config.get("sample_identity", {}).get(
+            "duplicate_min_correlation", 0.995
+        ),
+        duplicate_max_library_size_difference=config.get(
+            "sample_identity", {}
+        ).get("duplicate_max_library_size_difference", 0.05),
+        logdir="logs/{project}/reports/sample_identity/",
+    shell:
+        """
+        mkdir -p {params.logdir}
+        python3 workflow/scripts/sample_identity_report.py \
+            --metadata {input.metadata} \
+            --counts {input.counts} \
+            --output {output.report} \
+            --similarity-matrix {output.similarity_matrix} \
+            --multiqc-table {output.multiqc_table} \
+            --group-column {params.group_column:q} \
+            --top-variable-features {params.top_variable_features} \
+            --min-nearest-correlation {params.min_nearest_correlation} \
+            --same-group-margin {params.same_group_margin} \
+            --duplicate-min-correlation {params.duplicate_min_correlation} \
+            --duplicate-max-library-size-difference \
+                {params.duplicate_max_library_size_difference} 2> {log}
         """
 
 

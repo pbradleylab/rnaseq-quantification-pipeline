@@ -120,6 +120,13 @@ def fingerprint(features, values, indexes, sample, top_n=25):
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
+def library_size_relative_difference(left, right):
+    denominator = max(left, right)
+    if denominator <= 0:
+        return None
+    return abs(left - right) / denominator
+
+
 def metadata_differences(sample, other, metadata_by_sample, metadata_cols, sample_col):
     left = metadata_by_sample.get(sample, {})
     right = metadata_by_sample.get(other, {})
@@ -200,6 +207,48 @@ def write_similarity_matrix(path, ordered_samples, count_samples, correlations):
             writer.writerow(row)
 
 
+def duplicate_library_candidates(
+    sample,
+    count_samples,
+    correlations,
+    library_totals,
+    fingerprints,
+    min_correlation,
+    max_library_size_difference,
+):
+    if sample not in count_samples:
+        return []
+    candidates = []
+    for other in count_samples:
+        if other == sample:
+            continue
+        corr = correlations.get(sample, {}).get(other)
+        if corr is None or corr < min_correlation:
+            continue
+        library_diff = library_size_relative_difference(
+            library_totals.get(sample, 0.0), library_totals.get(other, 0.0)
+        )
+        if library_diff is None or library_diff > max_library_size_difference:
+            continue
+        fingerprint_match = fingerprints.get(sample) == fingerprints.get(other)
+        candidates.append(
+            {
+                "sample": other,
+                "correlation": corr,
+                "library_size_relative_difference": library_diff,
+                "fingerprint_match": fingerprint_match,
+            }
+        )
+    candidates.sort(
+        key=lambda item: (
+            -item["correlation"],
+            item["library_size_relative_difference"],
+            item["sample"],
+        )
+    )
+    return candidates
+
+
 def identity_status(
     sample,
     count_samples,
@@ -225,7 +274,8 @@ def identity_status(
     ):
         return (
             "review",
-            "Sample is closer to a different metadata group than to its closest same-group sample.",
+            "Sample is closer to a different metadata group than to its "
+            "closest same-group sample.",
         )
     return "pass", ""
 
@@ -242,6 +292,10 @@ def main():
     parser.add_argument("--top-variable-features", type=int, default=5000)
     parser.add_argument("--min-nearest-correlation", type=float, default=0.90)
     parser.add_argument("--same-group-margin", type=float, default=0.03)
+    parser.add_argument("--duplicate-min-correlation", type=float, default=0.995)
+    parser.add_argument(
+        "--duplicate-max-library-size-difference", type=float, default=0.05
+    )
     args = parser.parse_args()
 
     metadata_rows, metadata_cols, sample_col = read_metadata(args.metadata)
@@ -263,6 +317,10 @@ def main():
     nearest, correlations = nearest_neighbors(count_samples, profiles)
     library_totals = {
         sample: sum(count_values.get(sample, [])) for sample in count_samples
+    }
+    fingerprints = {
+        sample: fingerprint(features, count_values, indexes, sample)
+        for sample in count_samples
     }
     write_similarity_matrix(
         args.similarity_matrix, ordered_samples, count_samples, correlations
@@ -287,6 +345,12 @@ def main():
         "nearest_same_group_correlation",
         "nearest_different_group_sample",
         "nearest_different_group_correlation",
+        "duplicate_library_candidate",
+        "duplicate_candidate_count",
+        "duplicate_candidate_samples",
+        "duplicate_max_correlation",
+        "duplicate_min_library_size_relative_difference",
+        "duplicate_exact_fingerprint_match",
         "identity_status",
         "message",
     ]
@@ -315,17 +379,66 @@ def main():
             if sample in count_samples and sample not in metadata_by_sample:
                 status = "review"
                 message = "Sample is present in count matrix but missing from metadata."
+            duplicate_candidates = duplicate_library_candidates(
+                sample,
+                count_samples,
+                correlations,
+                library_totals,
+                fingerprints,
+                args.duplicate_min_correlation,
+                args.duplicate_max_library_size_difference,
+            )
+            duplicate_candidate = bool(duplicate_candidates)
+            if duplicate_candidate:
+                duplicate_message = (
+                    "Possible duplicate library: expression profile and assigned "
+                    "count total closely match another sample."
+                )
+                if status == "pass":
+                    status = "review"
+                    message = duplicate_message
+                elif message:
+                    message = f"{message} {duplicate_message}"
+                else:
+                    message = duplicate_message
             shared, different = metadata_differences(
                 sample, nearest_sample, metadata_by_sample, metadata_cols, sample_col
+            )
+            duplicate_sample_details = []
+            for candidate in duplicate_candidates:
+                library_diff = candidate["library_size_relative_difference"]
+                duplicate_sample_details.append(
+                    (
+                        "{sample}:r={corr}:library_diff={library_diff}:"
+                        "fingerprint_match={match}"
+                    ).format(
+                        sample=candidate["sample"],
+                        corr=fmt_corr(candidate["correlation"]),
+                        library_diff=f"{library_diff:.4f}",
+                        match=str(candidate["fingerprint_match"]).lower(),
+                    )
+                )
+            duplicate_min_library_diff = (
+                min(
+                    candidate["library_size_relative_difference"]
+                    for candidate in duplicate_candidates
+                )
+                if duplicate_candidates
+                else None
+            )
+            duplicate_exact_fingerprint_match = any(
+                candidate["fingerprint_match"] for candidate in duplicate_candidates
             )
             writer.writerow(
                 {
                     "sample": sample,
                     "metadata_present": str(sample in metadata_by_sample).lower(),
                     "counts_present": str(sample in count_samples).lower(),
-                    "assigned_counts": f"{library_total:.6g}" if sample in count_samples else "",
+                    "assigned_counts": (
+                        f"{library_total:.6g}" if sample in count_samples else ""
+                    ),
                     "fingerprint_sha256_16": (
-                        fingerprint(features, count_values, indexes, sample)
+                        fingerprints[sample]
                         if sample in count_samples
                         else ""
                     ),
@@ -340,6 +453,22 @@ def main():
                     "nearest_same_group_correlation": fmt_corr(same_corr),
                     "nearest_different_group_sample": different_sample,
                     "nearest_different_group_correlation": fmt_corr(different_corr),
+                    "duplicate_library_candidate": str(duplicate_candidate).lower(),
+                    "duplicate_candidate_count": len(duplicate_candidates),
+                    "duplicate_candidate_samples": ";".join(duplicate_sample_details),
+                    "duplicate_max_correlation": (
+                        fmt_corr(duplicate_candidates[0]["correlation"])
+                        if duplicate_candidates
+                        else ""
+                    ),
+                    "duplicate_min_library_size_relative_difference": (
+                        f"{duplicate_min_library_diff:.4f}"
+                        if duplicate_min_library_diff is not None
+                        else ""
+                    ),
+                    "duplicate_exact_fingerprint_match": str(
+                        duplicate_exact_fingerprint_match
+                    ).lower(),
                     "identity_status": status,
                     "message": message,
                 }

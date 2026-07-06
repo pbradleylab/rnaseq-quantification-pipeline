@@ -165,6 +165,31 @@ def validate_preflight_inputs(pep, config):
         errors.append("sample_identity.same_group_margin must be numeric.")
     if sample_identity_same_group_margin < 0:
         errors.append("sample_identity.same_group_margin must be at least 0.")
+    try:
+        sample_identity_duplicate_min_corr = float(
+            sample_identity.get("duplicate_min_correlation", 0.995)
+        )
+    except (TypeError, ValueError):
+        sample_identity_duplicate_min_corr = 0.995
+        errors.append("sample_identity.duplicate_min_correlation must be numeric.")
+    if not -1 <= sample_identity_duplicate_min_corr <= 1:
+        errors.append(
+            "sample_identity.duplicate_min_correlation must be between -1 and 1."
+        )
+    try:
+        sample_identity_duplicate_max_library_diff = float(
+            sample_identity.get("duplicate_max_library_size_difference", 0.05)
+        )
+    except (TypeError, ValueError):
+        sample_identity_duplicate_max_library_diff = 0.05
+        errors.append(
+            "sample_identity.duplicate_max_library_size_difference must be numeric."
+        )
+    if not 0 <= sample_identity_duplicate_max_library_diff <= 1:
+        errors.append(
+            "sample_identity.duplicate_max_library_size_difference must be "
+            "between 0 and 1."
+        )
 
     star_strandedness = str(
         config.get("star", {}).get("gene_counts_strandedness", "unstranded")

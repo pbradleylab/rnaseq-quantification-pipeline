@@ -536,6 +536,12 @@ rule sample_identity_report:
         same_group_margin=config.get("sample_identity", {}).get(
             "same_group_margin", 0.03
         ),
+        duplicate_min_correlation=config.get("sample_identity", {}).get(
+            "duplicate_min_correlation", 0.995
+        ),
+        duplicate_max_library_size_difference=config.get(
+            "sample_identity", {}
+        ).get("duplicate_max_library_size_difference", 0.05),
         logdir="logs/{project}/reports/sample_identity/",
     shell:
         """
@@ -548,7 +554,10 @@ rule sample_identity_report:
             --group-column {params.group_column:q} \
             --top-variable-features {params.top_variable_features} \
             --min-nearest-correlation {params.min_nearest_correlation} \
-            --same-group-margin {params.same_group_margin} 2> {log}
+            --same-group-margin {params.same_group_margin} \
+            --duplicate-min-correlation {params.duplicate_min_correlation} \
+            --duplicate-max-library-size-difference \
+                {params.duplicate_max_library_size_difference} 2> {log}
         """
 
 

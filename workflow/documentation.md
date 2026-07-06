@@ -35,7 +35,7 @@ inside `workflow/`.
 - `scripts/summarize_qc.py`: builds the final per-sample QC table.
 - `scripts/sample_identity_report.py`: fingerprints expression profiles from
   the merged count matrix, reports nearest expression neighbors, and flags
-  low-similarity or metadata-discordant samples.
+  low-similarity, metadata-discordant, or possible duplicate-library samples.
 - `scripts/check_count_annotation_overlap.py`: compares count-matrix
   `target_id` values with configured annotation feature IDs before DESeq2 runs.
 - `scripts/summarize_gene_biotype_counts.py`: summarizes count support by

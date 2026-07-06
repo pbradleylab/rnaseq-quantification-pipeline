@@ -31,7 +31,9 @@
         "group_column": "Time",
         "top_variable_features": 5000,
         "min_nearest_correlation": 0.90,
-        "same_group_margin": 0.03
+        "same_group_margin": 0.03,
+        "duplicate_min_correlation": 0.995,
+        "duplicate_max_library_size_difference": 0.05
     },
     "trim_galore": {
         "mem": 1024

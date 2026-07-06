@@ -119,7 +119,7 @@ For each project, the workflow produces:
 - A per-sample QC summary table.
 - A sample identity report that fingerprints expression profiles, identifies
   each sample's nearest expression neighbor, and flags low-similarity or
-  metadata-discordant samples.
+  metadata-discordant samples, including possible duplicate libraries.
 - A sample identity similarity matrix with all pairwise expression-profile
   correlations.
 - FastQC reports for raw reads.
@@ -402,6 +402,10 @@ QC and report options:
   correlation before a sample is flagged for review.
 - `sample_identity.same_group_margin`: correlation margin used to flag samples
   that are closer to a different group than to their closest same-group sample.
+- `sample_identity.duplicate_min_correlation`: minimum pairwise expression
+  correlation for possible duplicate-library calls.
+- `sample_identity.duplicate_max_library_size_difference`: maximum relative
+  assigned-count difference for possible duplicate-library calls.
 - `gunc.mem` and `gunc.threads`
 
 DESeq2 options:

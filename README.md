@@ -118,10 +118,12 @@ For each project, the workflow produces:
 - A MultiQC HTML report.
 - A per-sample QC summary table.
 - A sample identity report that fingerprints expression profiles, identifies
-  each sample's nearest expression neighbor, and flags low-similarity or
+  each sample's nearest expression neighbor, reports whether that nearest
+  neighbor relationship is reciprocal, and flags low-similarity or
   metadata-discordant samples, including possible duplicate libraries.
 - A sample identity similarity matrix with all pairwise expression-profile
   correlations.
+- A compact sample identity table embedded in the final MultiQC report.
 - FastQC reports for raw reads.
 - FastQC reports for trimmed reads.
 - FastQ Screen reports.
@@ -184,10 +186,12 @@ For each project, final outputs are written under `results/{project}/`.
 - `final/multiqc/multiqc_report.html`: combined QC report.
 - `final/qc/{project}_sample_qc_summary.tsv`: per-sample QC summary table.
 - `final/qc/{project}_sample_identity_report.tsv`: expression-profile sample
-  identity report with nearest-neighbor correlations, metadata agreement, and
-  review flags.
+  identity report with nearest-neighbor correlations, reciprocal-neighbor
+  status, metadata agreement, and review flags.
 - `final/qc/{project}_sample_identity_similarity_matrix.tsv`: all pairwise
   sample expression-profile correlations used by the identity report.
+- `final/qc/{project}_sample_identity_mqc.tsv`: MultiQC custom-content table
+  containing the key sample identity status fields.
 - `count_annotation_overlap/{project}_count_annotation_overlap.tsv`: count-matrix ID and
   annotation ID overlap report.
 - `gene_biotype_count_summary/{project}_gene_biotype_count_summary.tsv`: gene biotype and count

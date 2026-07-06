@@ -188,6 +188,14 @@ def fmt_corr(value):
     return "" if value is None else f"{value:.4f}"
 
 
+def reciprocal_nearest_neighbor(sample, nearest):
+    nearest_sample, _nearest_corr = nearest.get(sample, ("", None))
+    if not nearest_sample:
+        return False, "", None
+    reciprocal_sample, reciprocal_corr = nearest.get(nearest_sample, ("", None))
+    return reciprocal_sample == sample, reciprocal_sample, reciprocal_corr
+
+
 def write_similarity_matrix(path, ordered_samples, count_samples, correlations):
     output = Path(path)
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -205,6 +213,34 @@ def write_similarity_matrix(path, ordered_samples, count_samples, correlations):
                 else:
                     row.append("")
             writer.writerow(row)
+
+
+def write_multiqc_table(path, rows):
+    output = Path(path)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    fieldnames = [
+        "sample",
+        "identity_status",
+        "nearest_sample",
+        "nearest_correlation",
+        "reciprocal_nearest_neighbor",
+        "duplicate_library_candidate",
+        "duplicate_candidate_count",
+        "assigned_counts",
+        "message",
+    ]
+    with open(output, "w", newline="") as handle:
+        handle.write("# id: sample_identity_qc\n")
+        handle.write("# section_name: Sample Identity QC\n")
+        handle.write("# plot_type: table\n")
+        handle.write(
+            "# description: Expression-profile nearest-neighbor, reciprocal "
+            "neighbor, and duplicate-library checks.\n"
+        )
+        writer = csv.DictWriter(handle, fieldnames=fieldnames, delimiter="\t")
+        writer.writeheader()
+        for row in rows:
+            writer.writerow({field: row.get(field, "") for field in fieldnames})
 
 
 def duplicate_library_candidates(
@@ -288,6 +324,7 @@ def main():
     parser.add_argument("--metadata", required=True)
     parser.add_argument("--output", required=True)
     parser.add_argument("--similarity-matrix", required=True)
+    parser.add_argument("--multiqc-table", required=True)
     parser.add_argument("--group-column", default="")
     parser.add_argument("--top-variable-features", type=int, default=5000)
     parser.add_argument("--min-nearest-correlation", type=float, default=0.90)
@@ -337,6 +374,9 @@ def main():
         "features_used",
         "nearest_sample",
         "nearest_correlation",
+        "reciprocal_nearest_neighbor",
+        "nearest_sample_nearest_neighbor",
+        "nearest_sample_nearest_correlation",
         "nearest_shared_metadata_columns",
         "nearest_different_metadata_columns",
         "group_column",
@@ -357,8 +397,14 @@ def main():
     with open(output, "w", newline="") as handle:
         writer = csv.DictWriter(handle, fieldnames=fieldnames, delimiter="\t")
         writer.writeheader()
+        output_rows = []
         for sample in ordered_samples:
             nearest_sample, nearest_corr = nearest.get(sample, ("", None))
+            (
+                reciprocal_neighbor,
+                nearest_sample_nearest_sample,
+                nearest_sample_nearest_corr,
+            ) = reciprocal_nearest_neighbor(sample, nearest)
             same_sample, same_corr = best_group_neighbor(
                 sample, correlations, metadata_by_sample, group_col, same_group=True
             )
@@ -429,50 +475,55 @@ def main():
             duplicate_exact_fingerprint_match = any(
                 candidate["fingerprint_match"] for candidate in duplicate_candidates
             )
-            writer.writerow(
-                {
-                    "sample": sample,
-                    "metadata_present": str(sample in metadata_by_sample).lower(),
-                    "counts_present": str(sample in count_samples).lower(),
-                    "assigned_counts": (
-                        f"{library_total:.6g}" if sample in count_samples else ""
-                    ),
-                    "fingerprint_sha256_16": (
-                        fingerprints[sample]
-                        if sample in count_samples
-                        else ""
-                    ),
-                    "features_used": len(indexes),
-                    "nearest_sample": nearest_sample,
-                    "nearest_correlation": fmt_corr(nearest_corr),
-                    "nearest_shared_metadata_columns": ",".join(shared),
-                    "nearest_different_metadata_columns": ",".join(different),
-                    "group_column": group_col,
-                    "group_value": metadata_by_sample.get(sample, {}).get(group_col, ""),
-                    "nearest_same_group_sample": same_sample,
-                    "nearest_same_group_correlation": fmt_corr(same_corr),
-                    "nearest_different_group_sample": different_sample,
-                    "nearest_different_group_correlation": fmt_corr(different_corr),
-                    "duplicate_library_candidate": str(duplicate_candidate).lower(),
-                    "duplicate_candidate_count": len(duplicate_candidates),
-                    "duplicate_candidate_samples": ";".join(duplicate_sample_details),
-                    "duplicate_max_correlation": (
-                        fmt_corr(duplicate_candidates[0]["correlation"])
-                        if duplicate_candidates
-                        else ""
-                    ),
-                    "duplicate_min_library_size_relative_difference": (
-                        f"{duplicate_min_library_diff:.4f}"
-                        if duplicate_min_library_diff is not None
-                        else ""
-                    ),
-                    "duplicate_exact_fingerprint_match": str(
-                        duplicate_exact_fingerprint_match
-                    ).lower(),
-                    "identity_status": status,
-                    "message": message,
-                }
-            )
+            row = {
+                "sample": sample,
+                "metadata_present": str(sample in metadata_by_sample).lower(),
+                "counts_present": str(sample in count_samples).lower(),
+                "assigned_counts": (
+                    f"{library_total:.6g}" if sample in count_samples else ""
+                ),
+                "fingerprint_sha256_16": (
+                    fingerprints[sample] if sample in count_samples else ""
+                ),
+                "features_used": len(indexes),
+                "nearest_sample": nearest_sample,
+                "nearest_correlation": fmt_corr(nearest_corr),
+                "reciprocal_nearest_neighbor": str(reciprocal_neighbor).lower(),
+                "nearest_sample_nearest_neighbor": nearest_sample_nearest_sample,
+                "nearest_sample_nearest_correlation": fmt_corr(
+                    nearest_sample_nearest_corr
+                ),
+                "nearest_shared_metadata_columns": ",".join(shared),
+                "nearest_different_metadata_columns": ",".join(different),
+                "group_column": group_col,
+                "group_value": metadata_by_sample.get(sample, {}).get(group_col, ""),
+                "nearest_same_group_sample": same_sample,
+                "nearest_same_group_correlation": fmt_corr(same_corr),
+                "nearest_different_group_sample": different_sample,
+                "nearest_different_group_correlation": fmt_corr(different_corr),
+                "duplicate_library_candidate": str(duplicate_candidate).lower(),
+                "duplicate_candidate_count": len(duplicate_candidates),
+                "duplicate_candidate_samples": ";".join(duplicate_sample_details),
+                "duplicate_max_correlation": (
+                    fmt_corr(duplicate_candidates[0]["correlation"])
+                    if duplicate_candidates
+                    else ""
+                ),
+                "duplicate_min_library_size_relative_difference": (
+                    f"{duplicate_min_library_diff:.4f}"
+                    if duplicate_min_library_diff is not None
+                    else ""
+                ),
+                "duplicate_exact_fingerprint_match": str(
+                    duplicate_exact_fingerprint_match
+                ).lower(),
+                "identity_status": status,
+                "message": message,
+            }
+            writer.writerow(row)
+            output_rows.append(row)
+
+    write_multiqc_table(args.multiqc_table, output_rows)
 
 
 if __name__ == "__main__":

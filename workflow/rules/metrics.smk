@@ -281,6 +281,11 @@ def get_multiqc_subsamples(wildcards):
                 rules.gunc_plot.output[0].format(project=project, subsample=subsample)
             )
 
+    metricsLST.append(
+        rules.sample_identity_report.output.multiqc_table.format(
+            project=wildcards.project
+        )
+    )
     return metricsLST
 
 
@@ -516,6 +521,7 @@ rule sample_identity_report:
             "results/{project}/final/qc/"
             "{project}_sample_identity_similarity_matrix.tsv"
         ),
+        multiqc_table="results/{project}/final/qc/{project}_sample_identity_mqc.tsv",
     log:
         "logs/{project}/reports/sample_identity/sample_identity_report.log",
     conda:
@@ -551,6 +557,7 @@ rule sample_identity_report:
             --counts {input.counts} \
             --output {output.report} \
             --similarity-matrix {output.similarity_matrix} \
+            --multiqc-table {output.multiqc_table} \
             --group-column {params.group_column:q} \
             --top-variable-features {params.top_variable_features} \
             --min-nearest-correlation {params.min_nearest_correlation} \

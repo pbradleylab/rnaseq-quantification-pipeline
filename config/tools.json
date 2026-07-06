@@ -27,6 +27,12 @@
         "min_fraction": 0.75,
         "min_ratio": 2.0
     },
+    "sample_identity": {
+        "group_column": "Time",
+        "top_variable_features": 5000,
+        "min_nearest_correlation": 0.90,
+        "same_group_margin": 0.03
+    },
     "trim_galore": {
         "mem": 1024
     },

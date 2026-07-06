@@ -506,6 +506,47 @@ rule qc_summary:
         """
 
 
+rule sample_identity_report:
+    input:
+        metadata=config["metadata"],
+        counts=get_quant_counts,
+    output:
+        "results/{project}/final/qc/{project}_sample_identity_report.tsv",
+    log:
+        "logs/{project}/reports/sample_identity/sample_identity_report.log",
+    conda:
+        "../envs/metrics.yml"
+    resources:
+        mem_mb=config["multiqc"]["mem"],
+    params:
+        group_column=config.get("sample_identity", {}).get(
+            "group_column",
+            config.get("deseq2", {}).get("variable_to_analyze", ""),
+        ),
+        top_variable_features=config.get("sample_identity", {}).get(
+            "top_variable_features", 5000
+        ),
+        min_nearest_correlation=config.get("sample_identity", {}).get(
+            "min_nearest_correlation", 0.90
+        ),
+        same_group_margin=config.get("sample_identity", {}).get(
+            "same_group_margin", 0.03
+        ),
+        logdir="logs/{project}/reports/sample_identity/",
+    shell:
+        """
+        mkdir -p {params.logdir}
+        python3 workflow/scripts/sample_identity_report.py \
+            --metadata {input.metadata} \
+            --counts {input.counts} \
+            --output {output} \
+            --group-column {params.group_column:q} \
+            --top-variable-features {params.top_variable_features} \
+            --min-nearest-correlation {params.min_nearest_correlation} \
+            --same-group-margin {params.same_group_margin} 2> {log}
+        """
+
+
 rule strandedness_check:
     input:
         counts=rules.star_reads_per_gene.output.counts,

@@ -125,6 +125,47 @@ def validate_preflight_inputs(pep, config):
     if strandedness_min_ratio < 1:
         errors.append("strandedness_check.min_ratio must be at least 1.")
 
+    sample_identity = config.get("sample_identity", {})
+    sample_identity_group_column = sample_identity.get("group_column", "")
+    if (
+        sample_identity_group_column
+        and metadata_columns
+        and sample_identity_group_column not in metadata_columns
+    ):
+        errors.append(
+            "sample_identity.group_column is not present in metadata: "
+            f"{sample_identity_group_column}"
+        )
+    try:
+        sample_identity_top_features = int(
+            sample_identity.get("top_variable_features", 5000)
+        )
+    except (TypeError, ValueError):
+        sample_identity_top_features = 5000
+        errors.append("sample_identity.top_variable_features must be an integer.")
+    if sample_identity_top_features < 1:
+        errors.append("sample_identity.top_variable_features must be at least 1.")
+    try:
+        sample_identity_min_corr = float(
+            sample_identity.get("min_nearest_correlation", 0.90)
+        )
+    except (TypeError, ValueError):
+        sample_identity_min_corr = 0.90
+        errors.append("sample_identity.min_nearest_correlation must be numeric.")
+    if not -1 <= sample_identity_min_corr <= 1:
+        errors.append(
+            "sample_identity.min_nearest_correlation must be between -1 and 1."
+        )
+    try:
+        sample_identity_same_group_margin = float(
+            sample_identity.get("same_group_margin", 0.03)
+        )
+    except (TypeError, ValueError):
+        sample_identity_same_group_margin = 0.03
+        errors.append("sample_identity.same_group_margin must be numeric.")
+    if sample_identity_same_group_margin < 0:
+        errors.append("sample_identity.same_group_margin must be at least 0.")
+
     star_strandedness = str(
         config.get("star", {}).get("gene_counts_strandedness", "unstranded")
     ).lower()

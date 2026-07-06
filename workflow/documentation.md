@@ -12,7 +12,7 @@ inside `workflow/`.
   indices, and optional GUNC databases.
 - `rules/trimming.smk`: trims paired-end and single-end reads with Trim Galore.
 - `rules/metrics.smk`: runs FastQC, FastQ Screen, GUNC, strandedness checks,
-  MultiQC, and the final per-sample QC summary.
+  MultiQC, the final per-sample QC summary, and the sample identity report.
 - `rules/quantification.smk`: runs Kallisto, STAR, or FeatureCounts
   quantification and merges per-sample outputs.
 - `rules/deseq.smk`: runs DESeq2 and writes differential-expression tables plus
@@ -33,6 +33,9 @@ inside `workflow/`.
 - `scripts/combine_kallisto.py`: merges Kallisto `abundance.tsv` files from
   paired-end and single-end output directories.
 - `scripts/summarize_qc.py`: builds the final per-sample QC table.
+- `scripts/sample_identity_report.py`: fingerprints expression profiles from
+  the merged count matrix, reports nearest expression neighbors, and flags
+  low-similarity or metadata-discordant samples.
 - `scripts/check_count_annotation_overlap.py`: compares count-matrix
   `target_id` values with configured annotation feature IDs before DESeq2 runs.
 - `scripts/summarize_gene_biotype_counts.py`: summarizes count support by
@@ -47,6 +50,7 @@ inside `workflow/`.
 
 - `results/{project}/final/multiqc/multiqc_report.html`
 - `results/{project}/final/qc/{project}_sample_qc_summary.tsv`
+- `results/{project}/final/qc/{project}_sample_identity_report.tsv`
 - `results/{project}/final/qc/{project}_strandedness_summary.tsv`
 - `results/{project}/count_annotation_overlap/{project}_count_annotation_overlap.tsv`
 - `results/{project}/gene_biotype_count_summary/{project}_gene_biotype_count_summary.tsv`

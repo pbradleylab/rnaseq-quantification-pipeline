@@ -117,6 +117,9 @@ For each project, the workflow produces:
 
 - A MultiQC HTML report.
 - A per-sample QC summary table.
+- A sample identity report that fingerprints expression profiles, identifies
+  each sample's nearest expression neighbor, and flags low-similarity or
+  metadata-discordant samples.
 - FastQC reports for raw reads.
 - FastQC reports for trimmed reads.
 - FastQ Screen reports.
@@ -178,6 +181,9 @@ For each project, final outputs are written under `results/{project}/`.
 
 - `final/multiqc/multiqc_report.html`: combined QC report.
 - `final/qc/{project}_sample_qc_summary.tsv`: per-sample QC summary table.
+- `final/qc/{project}_sample_identity_report.tsv`: expression-profile sample
+  identity report with nearest-neighbor correlations, metadata agreement, and
+  review flags.
 - `count_annotation_overlap/{project}_count_annotation_overlap.tsv`: count-matrix ID and
   annotation ID overlap report.
 - `gene_biotype_count_summary/{project}_gene_biotype_count_summary.tsv`: gene biotype and count
@@ -384,6 +390,14 @@ QC and report options:
   `fastq_screen.aligner`
 - `trim_galore.mem`
 - `multiqc.mem`
+- `sample_identity.group_column`: metadata column used to check whether nearest
+  expression neighbors match the expected group.
+- `sample_identity.top_variable_features`: number of variable features used for
+  sample-profile correlations.
+- `sample_identity.min_nearest_correlation`: minimum nearest-neighbor
+  correlation before a sample is flagged for review.
+- `sample_identity.same_group_margin`: correlation margin used to flag samples
+  that are closer to a different group than to their closest same-group sample.
 - `gunc.mem` and `gunc.threads`
 
 DESeq2 options:

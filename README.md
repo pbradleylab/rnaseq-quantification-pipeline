@@ -274,6 +274,10 @@ snakemake --use-conda --cores 4
 cd ..
 ```
 
+If a download is interrupted, rerun the test-data step with
+`--rerun-incomplete` so Snakemake replaces partial FASTQ/reference files before
+the checksum step runs.
+
 Then run the main workflow from the repository root:
 
 ```bash

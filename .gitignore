@@ -4,3 +4,6 @@ resources/*
 logs/
 results/*
 test/Mycolicibacterium_smegmatis/*.fastq.gz
+test/Mycolicibacterium_smegmatis/*.fa
+test/Mycolicibacterium_smegmatis/*.gff
+test/Mycolicibacterium_smegmatis/*.done

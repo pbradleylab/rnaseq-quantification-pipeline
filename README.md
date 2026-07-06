@@ -258,15 +258,16 @@ created automatically when running Snakemake with `--use-conda`.
 
 ## Test Data
 
-The repository includes a small test reference and test sample sheets. To check
-that the workflow DAG builds:
+The repository includes test sample sheets and a small test-data download
+workflow. To check that the workflow DAG builds:
 
 ```bash
 conda activate snakemake
 snakemake --use-conda --cores 1 -n
 ```
 
-The test FASTQs can be generated from the `test/` directory:
+The test FASTQs and reference files can be downloaded from the `test/`
+directory:
 
 ```bash
 cd test
